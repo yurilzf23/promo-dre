@@ -1,0 +1,70 @@
+"""Histórico de preços em CSV (versionado no próprio repositório)."""
+from __future__ import annotations
+
+import csv
+import json
+import statistics
+from datetime import datetime, timedelta
+from pathlib import Path
+from zoneinfo import ZoneInfo
+
+TZ = ZoneInfo("America/Sao_Paulo")
+RAIZ = Path(__file__).resolve().parent.parent
+ARQ_HISTORICO = RAIZ / "data" / "historico.csv"
+ARQ_ESTADO = RAIZ / "data" / "estado.json"
+CAMPOS = ["data_hora", "item", "loja", "url", "preco", "disponivel", "origem"]
+
+
+def agora() -> datetime:
+    return datetime.now(TZ)
+
+
+def carregar(caminho: Path = ARQ_HISTORICO) -> list[dict]:
+    if not caminho.exists():
+        return []
+    with caminho.open(encoding="utf-8") as f:
+        linhas = list(csv.DictReader(f))
+    for l in linhas:
+        l["preco"] = float(l["preco"]) if l["preco"] else None
+        l["data_hora"] = datetime.fromisoformat(l["data_hora"])
+    return linhas
+
+
+def registrar(registros: list[dict], caminho: Path = ARQ_HISTORICO) -> None:
+    novo = not caminho.exists()
+    caminho.parent.mkdir(parents=True, exist_ok=True)
+    with caminho.open("a", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=CAMPOS)
+        if novo:
+            w.writeheader()
+        for r in registros:
+            linha = dict(r)
+            linha["data_hora"] = r["data_hora"].isoformat(timespec="minutes")
+            w.writerow({k: linha.get(k, "") for k in CAMPOS})
+
+
+def precos_do_item(hist: list[dict], item: str, dias: int | None = None) -> list[float]:
+    limite = agora() - timedelta(days=dias) if dias else None
+    return [
+        h["preco"]
+        for h in hist
+        if h["item"] == item and h["preco"] and (limite is None or h["data_hora"] >= limite)
+        and h.get("disponivel") not in ("False", False)
+    ]
+
+
+def mediana(valores: list[float]) -> float | None:
+    return statistics.median(valores) if valores else None
+
+
+# ---------------------------------------------------------------- estado dos alertas
+
+def carregar_estado(caminho: Path = ARQ_ESTADO) -> dict:
+    if caminho.exists():
+        return json.loads(caminho.read_text(encoding="utf-8"))
+    return {"alertas": {}}
+
+
+def salvar_estado(estado: dict, caminho: Path = ARQ_ESTADO) -> None:
+    caminho.parent.mkdir(parents=True, exist_ok=True)
+    caminho.write_text(json.dumps(estado, ensure_ascii=False, indent=2), encoding="utf-8")
