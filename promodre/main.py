@@ -54,6 +54,9 @@ def coletar(pausa: tuple[float, float] = (2.0, 5.0), so: set[str] | None = None,
     quando = h.agora()
     registros, avisos, falhas, esgotados = [], [], [], []
     bloqueios: dict[str, int] = {}
+    total = sum(len(filtrar_urls(i["urls"], so, sem)) for i in itens)
+    n = 0
+    print(f"Coletando {total} páginas...", flush=True)
 
     for item in itens:
         hist_total = h.minimos_diarios(hist, item["id"])
@@ -63,7 +66,12 @@ def coletar(pausa: tuple[float, float] = (2.0, 5.0), so: set[str] | None = None,
             if bloqueios.get(loja, 0) >= BLOQUEIOS_PARA_PULAR:
                 falhas.append((item["nome"], LOJAS.get(loja, loja), "pulado: a loja bloqueou esta coleta"))
                 continue
+            n += 1
+            print(f"[{n}/{total}] {LOJAS.get(loja, loja)} · {item['nome']} ... ", end="", flush=True)
+            inicio = time.time()
             leitura = buscar(url)
+            situacao = brl(leitura.preco) if leitura.preco else (leitura.erro or "sem preço")
+            print(f"{situacao} ({time.time() - inicio:.0f}s)", flush=True)
             time.sleep(random.uniform(*pausa))
             bloqueios[loja] = bloqueios.get(loja, 0) + 1 if leitura.erro == "HTTP 403" else 0
             if leitura.preco is None:

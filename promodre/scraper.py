@@ -223,7 +223,7 @@ def interpretar(html: str, url: str) -> Leitura:
                    erro=None if preco else "preço não encontrado na página", imagem=_imagem(html, url))
 
 
-def buscar(url: str, tentativas: int = 2, timeout: int = 25) -> Leitura:
+def buscar(url: str, tentativas: int = 2, timeout: int = 20) -> Leitura:
     ultimo_erro = ""
     for i in range(tentativas):
         try:
