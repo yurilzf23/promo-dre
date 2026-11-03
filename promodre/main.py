@@ -13,7 +13,7 @@ import argparse
 import json
 import random
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import yaml
@@ -24,7 +24,7 @@ from .scraper import buscar, loja_da_url
 RAIZ = Path(__file__).resolve().parent.parent
 LOJAS = {"pichau": "Pichau", "kabum": "Kabum", "terabyte": "Terabyte", "amazon": "Amazon",
          "mercadolivre": "Mercado Livre", "chipart": "Chipart"}
-LEGENDA = "🟢 = no alvo ou abaixo · preços à vista no PIX"
+LEGENDA = "🟢 no alvo · ⛔ esgotado · 🔻🔺 variação desde ontem · preços à vista no PIX"
 
 
 def brl(v: float | None) -> str:
@@ -116,25 +116,65 @@ def dados_alerta(item: dict, leitura, motivos: list[str]) -> dict:
 
 # ---------------------------------------------------------------- resumo diário
 
+NOMES_FASE = {1: "plataforma", 2: "placa de vídeo", 3: "memória, SSD e monitor"}
+MIN_DIAS_MEDIANA = 5
+
+
+def _melhor_do_dia(hist: list[dict], item_id: str, dia) -> tuple[dict | None, bool]:
+    """Melhor oferta disponível do dia (só coletas reais) e se houve leitura com tudo esgotado."""
+    lidas = [x for x in hist if x["item"] == item_id and x["preco"] and x["data_hora"].date() == dia
+             and x.get("origem", "coleta") != "varredura"]
+    disp = [x for x in lidas if x.get("disponivel") not in ("False", False)]
+    return (min(disp, key=lambda x: x["preco"]) if disp else None), bool(lidas) and not disp
+
+
 def montar_resumo(itens: list[dict], hist: list[dict], hoje: datetime) -> list[dict]:
-    """Agrupa o menor preço do dia de cada item por fase."""
-    fases: dict[int, list[dict]] = {}
-    for item in sorted(itens, key=lambda i: (i.get("fase", 9), i["id"])):
-        # só leituras reais do dia (a varredura manual serve de referência histórica, não de preço de hoje)
-        lidas_hoje = [x for x in hist if x["item"] == item["id"] and x["preco"]
-                      and x["data_hora"].date() == hoje.date() and x.get("origem", "coleta") != "varredura"]
-        do_dia = [x for x in lidas_hoje if x.get("disponivel") not in ("False", False)]
-        med30 = h.mediana(h.minimos_diarios(hist, item["id"], dias=30))
-        linha = {"nome": item["nome"], "alvo_fmt": brl(item.get("alvo")), "med_fmt": brl(med30) if med30 else None,
-                 "med_rotulo": "melhor preço típico 30d",
-                 "preco_fmt": None, "no_alvo": False, "esgotado": bool(lidas_hoje) and not do_dia}
-        if do_dia:
-            melhor = min(do_dia, key=lambda x: x["preco"])
-            linha.update(preco_fmt=brl(melhor["preco"]), url=melhor["url"],
-                         loja=LOJAS.get(melhor["loja"], melhor["loja"]),
-                         no_alvo=bool(item.get("alvo") and melhor["preco"] <= item["alvo"]))
-        fases.setdefault(item.get("fase", 9), []).append(linha)
-    return [{"fase": f, "linhas": ls} for f, ls in sorted(fases.items())]
+    """Menor preço do dia de cada item, agrupado por fase, com distância do alvo e variação desde ontem."""
+    ontem = hoje.date() - timedelta(days=1)
+    fases: dict[int, dict] = {}
+    for item in sorted(itens, key=lambda i: i.get("fase", 9)):  # mantém a ordem do produtos.yaml dentro da fase
+        fase = fases.setdefault(item.get("fase", 9), {"fase": item.get("fase", 9), "linhas": [],
+                                                      "soma": 0.0, "soma_alvo": 0.0, "faltando": []})
+        alvo = item.get("alvo")
+        alternativa = item.get("recomendado", True) is False
+        melhor, esgotado = _melhor_do_dia(hist, item["id"], hoje.date())
+        linha = {"nome": item.get("curto") or item["nome"], "alternativa": alternativa, "esgotado": esgotado,
+                 "preco_fmt": None, "no_alvo": False, "variacao": "", "detalhe": ""}
+        if melhor:
+            preco = melhor["preco"]
+            linha.update(preco_fmt=brl(preco), url=melhor["url"], loja=LOJAS.get(melhor["loja"], melhor["loja"]),
+                         no_alvo=bool(alvo and preco <= alvo))
+            if alvo:
+                dif = preco - alvo
+                pct = dif / preco * 100
+                pct_txt = f"{pct:.1f}".replace(".", ",") if pct < 1 else f"{pct:.0f}"
+                linha["detalhe"] = (f"{brl(-dif)} abaixo do alvo de {brl(alvo)}" if dif <= 0
+                                    else f"falta {brl(dif)} ({pct_txt}%) pro alvo de {brl(alvo)}")
+            minimos = h.minimos_diarios(hist, item["id"], dias=30)
+            if len(minimos) >= MIN_DIAS_MEDIANA:
+                linha["detalhe"] += f" · típico 30d {brl(h.mediana(minimos))}"
+            antes, _ = _melhor_do_dia(hist, item["id"], ontem)
+            if antes and abs(preco - antes["preco"]) >= 0.01:
+                seta = "🔻" if preco < antes["preco"] else "🔺"
+                linha["variacao"] = f"{seta} {brl(abs(preco - antes['preco']))}"
+        if not alternativa:
+            if melhor:
+                fase["soma"] += melhor["preco"]
+                fase["soma_alvo"] += alvo or 0
+            else:
+                fase["faltando"].append(linha["nome"])
+        fase["linhas"].append(linha)
+
+    saida = []
+    for n, f in sorted(fases.items()):
+        titulo = f"Fase {n}" + (f" · {NOMES_FASE[n]}" if n in NOMES_FASE else "")
+        total = ""
+        if f["soma"]:
+            total = f"Hoje {brl(f['soma'])} · alvo {brl(f['soma_alvo'])}"
+            if f["faltando"]:
+                total += f" (sem {', '.join(f['faltando'])})"
+        saida.append({"fase": n, "titulo": titulo, "total": total, "linhas": f["linhas"]})
+    return saida
 
 
 def resumo() -> list[dict]:
@@ -146,7 +186,7 @@ def resumo() -> list[dict]:
 
 # ---------------------------------------------------------------- alerta de teste
 
-URL_TESTE = "https://www.kabum.com.br/produto/459144/placa-de-video-rx-7600-challenger-asrock-amd-radeon-8gb-gddr6-90-ga41zz-00uanf"
+URL_TESTE = "https://www.kabum.com.br/produto/459144"
 
 
 def testar_alerta(url: str | None = None) -> dict | None:

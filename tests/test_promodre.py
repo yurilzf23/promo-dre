@@ -131,7 +131,8 @@ def test_resumo_marca_item_no_alvo():
     assert l["no_alvo"] and l["preco_fmt"] == "R$ 129,90" and l["loja"] == "Pichau"
     assert fases[1]["linhas"][0]["preco_fmt"] is None
     txt = notificar.texto_resumo("Resumo", fases, "leg", html=False)
-    assert "🟢 Cooler: R$ 129,90" in txt and "GPU: sem leitura hoje" in txt
+    assert "🟢 Cooler · R$ 129,90 Pichau" in txt and "GPU · sem leitura hoje" in txt
+    assert "R$ 0,10 abaixo do alvo" in txt
 
 
 class _Resp:
@@ -166,12 +167,15 @@ def test_discord_respeita_limite_429(monkeypatch):
 
 
 def test_discord_resumo_um_embed_por_fase():
-    fases = [{"fase": 1, "linhas": [{"nome": "Cooler", "preco_fmt": "R$ 129,90", "url": "u", "loja": "Pichau",
-                                     "alvo_fmt": "R$ 130,00", "med_fmt": None, "no_alvo": True}]},
-             {"fase": 2, "linhas": [{"nome": "GPU", "preco_fmt": None, "alvo_fmt": "R$ 2.000,00", "no_alvo": False}]}]
+    fases = [{"fase": 1, "titulo": "Fase 1 · plataforma", "total": "Hoje R$ 129,90 · alvo R$ 130,00",
+              "linhas": [{"nome": "Cooler", "preco_fmt": "R$ 129,90", "url": "u", "loja": "Pichau",
+                          "no_alvo": True, "variacao": "🔻 R$ 10,00", "detalhe": "R$ 0,10 abaixo do alvo"}]},
+             {"fase": 2, "titulo": "Fase 2", "total": "", "linhas": [{"nome": "GPU", "preco_fmt": None, "no_alvo": False}]}]
     embeds = discord.embed_resumo("Resumo", fases, "leg")
-    assert len(embeds) == 2 and embeds[0]["color"] == discord.COR_OK
-    assert "[R$ 129,90](u)" in embeds[0]["description"] and embeds[1]["footer"]["text"] == "leg"
+    assert len(embeds) == 2 and embeds[0]["color"] == discord.COR_OK and embeds[0]["title"] == "Fase 1 · plataforma"
+    d = embeds[0]["description"]
+    assert d.startswith("**Hoje R$ 129,90") and "[R$ 129,90](u) Pichau 🔻 R$ 10,00" in d
+    assert embeds[1]["footer"]["text"] == "leg"
 
 
 def test_brl():
@@ -237,3 +241,32 @@ def test_resumo_ignora_varredura_como_preco_do_dia():
     hist = [{"data_hora": hoje, "item": "g", "loja": "kabum", "url": "v", "preco": 2359.0, "disponivel": "True", "origem": "varredura"},
             {"data_hora": hoje, "item": "g", "loja": "kabum", "url": "u", "preco": 2899.99, "disponivel": "True", "origem": "coleta"}]
     assert montar_resumo(itens, hist, hoje)[0]["linhas"][0]["preco_fmt"] == "R$ 2.899,99"
+
+
+def test_resumo_total_da_fase_variacao_e_distancia():
+    hoje = h.agora()
+    ontem = hoje - timedelta(days=1)
+    itens = [{"id": "cpu", "nome": "CPU", "curto": "CPU", "fase": 1, "alvo": 1000, "urls": []},
+             {"id": "mb", "nome": "Placa", "fase": 1, "alvo": 500, "urls": []},
+             {"id": "alt", "nome": "CPU alt", "fase": 1, "alvo": 900, "recomendado": False, "urls": []}]
+    reg = lambda t, i, p, d="True": {"data_hora": t, "item": i, "loja": "kabum", "url": i, "preco": p,
+                                     "disponivel": d, "origem": "coleta"}
+    hist = [reg(ontem, "cpu", 1150.0), reg(hoje, "cpu", 1100.0), reg(hoje, "mb", 520.0), reg(hoje, "alt", 950.0)]
+    f = montar_resumo(itens, hist, hoje)[0]
+    assert f["titulo"] == "Fase 1 · plataforma"
+    assert f["total"] == "Hoje R$ 1.620,00 · alvo R$ 1.500,00"  # a alternativa não entra
+    cpu = f["linhas"][0]
+    assert cpu["variacao"] == "🔻 R$ 50,00"
+    assert cpu["detalhe"] == "falta R$ 100,00 (9%) pro alvo de R$ 1.000,00"
+    assert f["linhas"][2]["alternativa"] is True
+
+
+def test_total_avisa_item_recomendado_sem_preco():
+    hoje = h.agora()
+    itens = [{"id": "cpu", "nome": "CPU", "fase": 1, "alvo": 1000, "urls": []},
+             {"id": "mb", "nome": "Placa", "fase": 1, "alvo": 500, "urls": []}]
+    hist = [{"data_hora": hoje, "item": "mb", "loja": "kabum", "url": "u", "preco": 520.0, "disponivel": "True", "origem": "coleta"},
+            {"data_hora": hoje, "item": "cpu", "loja": "kabum", "url": "v", "preco": 999.0, "disponivel": "False", "origem": "coleta"}]
+    f = montar_resumo(itens, hist, hoje)[0]
+    assert f["total"] == "Hoje R$ 520,00 · alvo R$ 500,00 (sem CPU)"
+    assert f["linhas"][0]["esgotado"] is True

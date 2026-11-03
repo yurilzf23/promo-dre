@@ -57,23 +57,25 @@ def embed_alerta(nome: str, preco_fmt: str, loja: str, url: str, motivos: list[s
 
 
 def embed_resumo(titulo: str, fases: list[dict], legenda: str) -> list[dict]:
-    """Um embed por fase. Cada fase: {'fase': n, 'linhas': [{nome, preco_fmt, loja, url, alvo_fmt, med_fmt, no_alvo}]}"""
+    """Um embed por fase, no formato montado por main.montar_resumo."""
     embeds = []
     for i, f in enumerate(fases):
         linhas = []
         for l in f["linhas"]:
+            nome = f"**{l['nome']}**" + (" _(alternativa)_" if l.get("alternativa") else "")
             if l.get("preco_fmt") is None:
-                linhas.append(f"⛔ **{l['nome']}**: esgotado em todas as lojas monitoradas" if l.get("esgotado")
-                              else f"⚪ **{l['nome']}**: sem leitura hoje")
+                linhas.append(f"⛔ {nome} · esgotado em todas as lojas" if l.get("esgotado")
+                              else f"⚪ {nome} · sem leitura hoje")
                 continue
             sinal = "🟢" if l["no_alvo"] else "⚪"
-            extra = f" · melhor típico 30d {l['med_fmt']}" if l.get("med_fmt") else ""
-            linhas.append(f"{sinal} **{l['nome']}**: [{l['preco_fmt']}]({l['url']}) ({l['loja']})\n"
-                          f"　alvo {l['alvo_fmt']}{extra}")
+            var = f" {l['variacao']}" if l.get("variacao") else ""
+            linhas.append(f"{sinal} {nome} · [{l['preco_fmt']}]({l['url']}) {l['loja']}{var}"
+                          + (f"\n　{l['detalhe']}" if l.get("detalhe") else ""))
         algum_ok = any(l.get("no_alvo") for l in f["linhas"])
         e = {
-            "title": f"Fase {f['fase']}",
-            "description": "\n".join(linhas)[:4000] or "Sem itens.",
+            "title": f.get("titulo") or f"Fase {f['fase']}",
+            "description": ((f"**{f['total']}**\n\n" if f.get("total") else "") + "\n".join(linhas))[:4000]
+                           or "Sem itens.",
             "color": COR_OK if algum_ok else COR_RESUMO,
         }
         if i == 0:

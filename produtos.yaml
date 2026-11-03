@@ -1,34 +1,57 @@
 # Promo Dre - lista de monitoramento
-# alvo: preço à vista (PIX) que dispara alerta na hora.
-# Além do alvo, o bot avisa quando o preço cai 8% abaixo da mediana dos últimos 30 dias
-# ou bate a mínima histórica. Os alvos iniciais saíram da varredura de 03/11/2026.
 #
-# Para adicionar um produto: copie um bloco, troque id, nome, alvo e as URLs.
-# Lojas com leitura dedicada: pichau, kabum, terabyte. Outras usam leitura genérica (JSON-LD).
+# Campos de cada item:
+#   id           identificador (não mude depois que tiver histórico)
+#   nome         nome completo (usado nos alertas)
+#   curto        nome curto (usado no resumo diário, cabe no celular)
+#   fase         1 plataforma, 2 placa de vídeo, 3 memória/SSD/monitor
+#   alvo         preço à vista (PIX) que dispara alerta na hora
+#   recomendado  false = alternativa (não entra no total da fase)
+#   urls         páginas de produto. Pichau é coletada pelo PC; Kabum e Terabyte pelo GitHub.
+#                Na Kabum basta https://www.kabum.com.br/produto/NUMERO
+#
+# Alvos marcados "provisório" foram definidos sem varredura completa. Ajuste depois de ~1 semana
+# de histórico, olhando o "típico 30d" que aparece no resumo.
 
 itens:
-  # ---------- Fase 1: plataforma ----------
+  # =============== Fase 1: plataforma ===============
   - id: cpu_5700x3d
     nome: Ryzen 7 5700X3D
+    curto: Ryzen 7 5700X3D
     fase: 1
     alvo: 1540
     urls:
       - https://www.pichau.com.br/processador-amd-ryzen-7-5700x3d-8-core-16-threads-3-0ghz-4-1ghz-turbo-cache-100mb-am4-100-100001503wof-br
       - https://www.pichau.com.br/processador-amd-ryzen-7-5700x3d-8-core-16-threads-3-0ghz-4-1ghz-turbo-cache-100mb-am4-100-100001503wof
       - https://www.terabyteshop.com.br/produto/27329/processador-amd-ryzen-7-5700x3d-30ghz-41ghz-turbo-8-cores-16-threads-am4-sem-cooler-100-100001503wof
-      - https://www.kabum.com.br/produto/520369/processador-amd-ryzen-7-5700x3d-3-0-ghz-4-1ghz-max-turbo-cache-4mb-8-nucleos-16-threads-am4-sem-video-integrado-100-100001503wof
+      - https://www.kabum.com.br/produto/520369
+
+  - id: cpu_5800x3d
+    nome: Ryzen 7 5800X3D (alternativa ao 5700X3D)
+    curto: Ryzen 7 5800X3D
+    fase: 1
+    alvo: 1990  # provisório
+    recomendado: false
+    urls:
+      - https://www.kabum.com.br/produto/1053828
+      - https://www.kabum.com.br/produto/409889
+      - https://www.kabum.com.br/produto/1053076
+      - https://www.terabyteshop.com.br/produto/20792/processador-amd-ryzen-7-5800x3d-34ghz-45ghz-turbo-8-cores-16-threads-am4-sem-cooler-sem-video
 
   - id: cpu_5700x
     nome: Ryzen 7 5700X (alternativa)
+    curto: Ryzen 7 5700X
     fase: 1
     alvo: 970
+    recomendado: false
     urls:
       - https://www.pichau.com.br/processador-amd-ryzen-7-5700x-8-core-16-threads-3-4ghz-4-6ghz-turbo-cache-36mb-am4-100-100000926wof
       - https://www.terabyteshop.com.br/produto/20813/processador-amd-ryzen-7-5700x-34ghz-46ghz-turbo-8-cores-16-threads-am4-sem-cooler-100-100000926wof
-      - https://www.kabum.com.br/produto/320797/processador-amd-ryzen-7-5700x-3-4ghz-4-6ghz-max-turbo-cache-36mb-am4-sem-video-100-100000926wof
+      - https://www.kabum.com.br/produto/320797
 
   - id: mb_b550m
     nome: Placa-mãe B550M (DDR4, AM4)
+    curto: Placa B550M
     fase: 1
     alvo: 510
     urls:
@@ -36,18 +59,27 @@ itens:
       - https://www.terabyteshop.com.br/produto/25380/placa-mae-gigabyte-b550m-k-chipset-b550-amd-am4-matx-ddr4
       - https://www.terabyteshop.com.br/produto/26987/placa-mae-gigabyte-b550m-aorus-elite-ax-chipset-b550-amd-am4-matx-ddr4
       - https://www.pichau.com.br/placa-mae-gigabyte-b550m-k-ddr4-socket-amd-am4-m-atx-chipset-amd-b550-b550m-k
+      - https://www.kabum.com.br/produto/941257
+      - https://www.kabum.com.br/produto/636785
+      - https://www.kabum.com.br/produto/875852
+      - https://www.kabum.com.br/produto/115216
+      - https://www.kabum.com.br/produto/114781
+      - https://www.kabum.com.br/produto/114852
 
   - id: cooler_ak400
     nome: Air cooler DeepCool AK400
+    curto: Cooler AK400
     fase: 1
     alvo: 130
     urls:
       - https://www.pichau.com.br/cooler-para-processador-deepcool-ak400-120mm-r-ak400-bknnmn-g-1
       - https://www.terabyteshop.com.br/produto/21648/cooler-para-processador-deepcool-ak400-120mm-intel-amd-r-ak400-bknnmn-g-1
+      - https://www.pichau.com.br/cooler-para-processador-deepcool-ak400-digital-120mm-preto-r-ak400-bkadmn-g
 
-  # ---------- Fase 2: placa de vídeo ----------
+  # =============== Fase 2: placa de vídeo ===============
   - id: gpu_rtx5060
     nome: RTX 5060 8 GB
+    curto: RTX 5060 8 GB
     fase: 2
     alvo: 2350
     urls:
@@ -65,46 +97,97 @@ itens:
       - https://www.kabum.com.br/produto/777075
       - https://www.kabum.com.br/produto/1000741
       - https://www.kabum.com.br/produto/912220
+      - https://www.kabum.com.br/produto/877565
+      - https://www.kabum.com.br/produto/989624
+      - https://www.kabum.com.br/produto/988706
 
   - id: gpu_rx7600
-    nome: RX 7600 8 GB
+    nome: RX 7600 8 GB (alternativa)
+    curto: RX 7600 8 GB
     fase: 2
     alvo: 1870
+    recomendado: false
     urls:
       - https://www.pichau.com.br/placa-de-video-xfx-radeon-rx-7600-speedster-swft210-8gb-gddr6-128-bit-rx-76pswftfy
       - https://www.pichau.com.br/placa-de-video-gigabyte-radeon-rx-7600-gaming-oc-8gb-gddr6-128-bit-gv-r76gaming-oc-8gd
       - https://www.pichau.com.br/placa-de-video-xfx-radeon-rx-7600-speedster-qick308-8gb-gddr6-128-bit-rx-76pqickby
       - https://www.pichau.com.br/placa-de-video-powercolor-radeon-rx-7600-fighter-8gb-gddr6-128-bit-rx7600-8g-f
-      - https://www.kabum.com.br/produto/459144/placa-de-video-rx-7600-challenger-asrock-amd-radeon-8gb-gddr6-90-ga41zz-00uanf
+      - https://www.kabum.com.br/produto/459144
+      - https://www.kabum.com.br/produto/907814
+      - https://www.kabum.com.br/produto/723235
       - https://www.terabyteshop.com.br/produto/25052/placa-de-video-asrock-amd-radeon-rx-7600-steel-legend-oc-8gb-gddr6-fsr-ray-tracing-90-ga4dzz-00uanf
       - https://www.terabyteshop.com.br/produto/43356/placa-de-video-biostar-amd-radeon-rx-7600-oc-ultimate-gaming-8gb-gddr6-fsr-ray-tracing-va76s6rm81
       - https://www.terabyteshop.com.br/produto/25051/placa-de-video-asrock-amd-radeon-rx-7600-challenger-oc-8gb-gddr6-fsr-ray-tracing-90-ga41zz-00uanf
 
-  # ---------- Fase 3: memória, SSD e monitor ----------
+  - id: gpu_rx9060xt16
+    nome: RX 9060 XT 16 GB (alternativa com 16 GB, pensando no GTA 6)
+    curto: RX 9060 XT 16 GB
+    fase: 2
+    alvo: 2990  # provisório
+    recomendado: false
+    urls:
+      - https://www.kabum.com.br/produto/918208
+      - https://www.kabum.com.br/produto/781230
+      - https://www.kabum.com.br/produto/734678
+      - https://www.kabum.com.br/produto/779094
+      - https://www.kabum.com.br/produto/779095
+      - https://www.kabum.com.br/produto/871958
+      - https://www.kabum.com.br/produto/871962
+      - https://www.kabum.com.br/produto/870975
+
+  - id: gpu_rtx5060ti16
+    nome: RTX 5060 Ti 16 GB (alternativa com 16 GB, pensando no GTA 6)
+    curto: RTX 5060 Ti 16 GB
+    fase: 2
+    alvo: 3290  # provisório
+    recomendado: false
+    urls:
+      - https://www.kabum.com.br/produto/730378
+      - https://www.kabum.com.br/produto/730379
+      - https://www.kabum.com.br/produto/747552
+      - https://www.kabum.com.br/produto/747550
+      - https://www.kabum.com.br/produto/777167
+      - https://www.kabum.com.br/produto/997883
+
+  # =============== Fase 3: memória, SSD e monitor ===============
   - id: ram_32gb
     nome: Memória 32 GB DDR4 3200
+    curto: RAM 32 GB DDR4
     fase: 3
     alvo: 1990
     urls:
       - https://www.terabyteshop.com.br/produto/26054/memoria-ddr4-kingston-fury-beast-rgb-32gb-3200mhz-black-kf432c16bb2a32
-      - https://www.kabum.com.br/produto/355886/memoria-kingston-fury-beast-black-32gb-3200mhz-ddr4-kf432c16bb-32
-      - https://www.kabum.com.br/produto/480530/memoria-ram-kingston-fury-beast-rgb-32gb-2x16gb-3200mhz-ddr4-cl16-preto-kf432c16bb12ak2-32
+      - https://www.kabum.com.br/produto/355886
+      - https://www.kabum.com.br/produto/480530
+      - https://www.kabum.com.br/produto/172413
+      - https://www.kabum.com.br/produto/110536
+      - https://www.kabum.com.br/produto/304871
+      - https://www.kabum.com.br/produto/156621
 
   - id: ssd_nvme_1tb
-    nome: SSD NVMe 1 TB (Kingston NV3)
+    nome: SSD NVMe 1 TB
+    curto: SSD NVMe 1 TB
     fase: 3
     alvo: 990
     urls:
-      - https://www.kabum.com.br/produto/633107/ssd-kingston-1tb-padrao-nv3-m-2-2280-nvme-4-0-gen-4x4-leitura-6000-e-gravacao-4000mbps-ultra-rapido-snv3s-1000g
-      - https://www.kabum.com.br/produto/621162/ssd-kingston-nv3-1-tb-m-2-2280-pcie-4-0-x4-nvme-leitura-6000-mb-s-gravacao-4000-mb-s-azul-snv3s-1000g
+      - https://www.kabum.com.br/produto/633107
+      - https://www.kabum.com.br/produto/621162
       - https://www.pichau.com.br/ssd-kingston-nv3-1tb-m-2-2280-pcie-nvme-leitura-6000mb-s-gravacao-4000mb-s-snv3s-1000g
+      - https://www.kabum.com.br/produto/597845
+      - https://www.kabum.com.br/produto/729815
+      - https://www.kabum.com.br/produto/400812
 
   - id: monitor_180hz
     nome: Monitor 24" 1080p 180 Hz IPS
+    curto: Monitor 24" 180 Hz
     fase: 3
     alvo: 560
     urls:
       - https://www.terabyteshop.com.br/produto/38152/monitor-gamer-duex-24-pol-full-hd-1ms-180hz-ips-freesync-hdmidp-dxmo24f180
-      - https://www.kabum.com.br/produto/752839/monitor-gamer-duex-24-full-hd-180hz-1ms-ips-adaptative-sync-hdr-10-hdmi-e-displayport-som-integrado-preto-dxmo24f180s
-      - https://www.kabum.com.br/produto/614879/monitor-gamer-lg-ultragear-24-fhd-180hz-1ms-ips-dp-e-hdmi-hdr10-freesync-g-sync-24gs60f-b
-      - https://www.kabum.com.br/produto/659038/monitor-gamer-aoc-24-fhd-ips-180hz-0-5ms-hdmi-e-dp-w-led-antireflexo-ajuste-de-altura-preto-24g4-p
+      - https://www.kabum.com.br/produto/752839
+      - https://www.kabum.com.br/produto/614879
+      - https://www.kabum.com.br/produto/659038
+      - https://www.kabum.com.br/produto/873575
+      - https://www.kabum.com.br/produto/1063600
+      - https://www.kabum.com.br/produto/695543
+      - https://www.kabum.com.br/produto/943542

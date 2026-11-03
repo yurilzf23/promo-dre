@@ -40,20 +40,27 @@ def resumo(titulo: str, fases: list[dict], legenda: str) -> None:
 
 
 def texto_resumo(titulo: str, fases: list[dict], legenda: str, html: bool) -> str:
-    b = (lambda s: f"<b>{escape(s)}</b>") if html else (lambda s: s)
+    esc = escape if html else (lambda x: x)
+    b = (lambda x: f"<b>{escape(x)}</b>") if html else (lambda x: x)
     out = [b(titulo), ""]
     for f in fases:
-        out.append(b(f"Fase {f['fase']}"))
+        out.append(b(f.get("titulo") or f"Fase {f['fase']}"))
+        if f.get("total"):
+            out.append(esc(f["total"]))
         for l in f["linhas"]:
+            nome = esc(l["nome"]) + (" (alternativa)" if l.get("alternativa") else "")
             if l.get("preco_fmt") is None:
-                out.append(f"⛔ {l['nome']}: esgotado em todas as lojas monitoradas" if l.get("esgotado")
-                           else f"• {l['nome']}: sem leitura hoje")
+                out.append(f"⛔ {nome} · esgotado em todas as lojas" if l.get("esgotado")
+                           else f"⚪ {nome} · sem leitura hoje")
                 continue
             sinal = "🟢" if l["no_alvo"] else "⚪"
             preco = f'<a href="{escape(l["url"])}">{l["preco_fmt"]}</a>' if html else l["preco_fmt"]
-            extra = f" · melhor típico 30d {l['med_fmt']}" if l.get("med_fmt") else ""
-            out.append(f"{sinal} {escape(l['nome']) if html else l['nome']}: {preco} ({l['loja']}) · alvo {l['alvo_fmt']}{extra}")
-    out += ["", legenda]
+            var = f" {l['variacao']}" if l.get("variacao") else ""
+            out.append(f"{sinal} {nome} · {preco} {l['loja']}{var}")
+            if l.get("detalhe"):
+                out.append(f"   {esc(l['detalhe'])}")
+        out.append("")
+    out.append(legenda)
     return "\n".join(out)
 
 
