@@ -176,3 +176,34 @@ def test_discord_resumo_um_embed_por_fase():
 
 def test_brl():
     assert brl(1699.99) == "R$ 1.699,99"
+
+
+def test_filtrar_urls_por_loja():
+    from promodre.main import filtrar_urls
+    urls = ["https://www.pichau.com.br/a", "https://www.kabum.com.br/produto/1", "https://www.terabyteshop.com.br/produto/2"]
+    assert filtrar_urls(urls, {"pichau"}, None) == urls[:1]
+    assert filtrar_urls(urls, None, {"pichau"}) == urls[1:]
+    assert filtrar_urls(urls, None, None) == urls
+
+
+def test_carregar_junta_historico_do_github_e_do_pc(tmp_path, monkeypatch):
+    (tmp_path / "data").mkdir()
+    monkeypatch.setattr(h, "RAIZ", tmp_path)
+    t = h.agora()
+    base = {"data_hora": t, "item": "x", "url": "u", "disponivel": True, "origem": "t"}
+    h.registrar([{**base, "loja": "kabum", "preco": 10.0}], tmp_path / "data" / "historico.csv")
+    h.registrar([{**base, "loja": "pichau", "preco": 9.0}], tmp_path / "data" / "historico_pc.csv")
+    assert sorted(l["loja"] for l in h.carregar()) == ["kabum", "pichau"]
+
+
+def test_403_nao_tenta_de_novo(monkeypatch):
+    from promodre import scraper
+    chamadas = []
+
+    class R:
+        status_code, text = 403, ""
+
+    monkeypatch.setattr(scraper.http, "get", lambda *a, **k: chamadas.append(1) or R())
+    monkeypatch.setattr(scraper.time, "sleep", lambda s: None)
+    l = scraper.buscar("https://www.pichau.com.br/x")
+    assert l.erro == "HTTP 403" and len(chamadas) == 1

@@ -1,3 +1,6 @@
 __pycache__/
 .pytest_cache/
 *.pyc
+webhook.txt
+.venv/
+coletar_pc.log

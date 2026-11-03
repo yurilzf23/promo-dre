@@ -47,7 +47,13 @@ jobs:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python -m promodre.main ${{ steps.t.outputs.tarefa }}
+        run: |
+          if [ "${{ steps.t.outputs.tarefa }}" = "coletar" ]; then
+            # a Pichau bloqueia os servidores do GitHub; ela é coletada pelo PC (coletar_pc.bat)
+            python -m promodre.main coletar --sem pichau
+          else
+            python -m promodre.main ${{ steps.t.outputs.tarefa }}
+          fi
 
       - name: Salvar histórico
         if: steps.t.outputs.tarefa == 'coletar'
@@ -56,4 +62,5 @@ jobs:
           git config user.email "promo-dre-bot@users.noreply.github.com"
           git add data/
           git diff --cached --quiet || git commit -m "coleta $(date -u +%Y-%m-%dT%H:%MZ)"
+          git pull --rebase -q origin main
           git push

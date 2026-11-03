@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 import statistics
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -10,8 +11,12 @@ from zoneinfo import ZoneInfo
 
 TZ = ZoneInfo("America/Sao_Paulo")
 RAIZ = Path(__file__).resolve().parent.parent
-ARQ_HISTORICO = RAIZ / "data" / "historico.csv"
-ARQ_ESTADO = RAIZ / "data" / "estado.json"
+# Perfil "pc": a coleta feita no seu computador grava em arquivos próprios
+# (historico_pc.csv / estado_pc.json) para nunca dar conflito com a do GitHub.
+PERFIL = os.environ.get("PROMODRE_PERFIL", "").strip().lower()
+_SUFIXO = f"_{PERFIL}" if PERFIL else ""
+ARQ_HISTORICO = RAIZ / "data" / f"historico{_SUFIXO}.csv"
+ARQ_ESTADO = RAIZ / "data" / f"estado{_SUFIXO}.json"
 CAMPOS = ["data_hora", "item", "loja", "url", "preco", "disponivel", "origem"]
 
 
@@ -19,11 +24,15 @@ def agora() -> datetime:
     return datetime.now(TZ)
 
 
-def carregar(caminho: Path = ARQ_HISTORICO) -> list[dict]:
-    if not caminho.exists():
-        return []
-    with caminho.open(encoding="utf-8") as f:
-        linhas = list(csv.DictReader(f))
+def carregar(caminho: Path | None = None) -> list[dict]:
+    """Sem caminho, junta todos os históricos (GitHub + PC) para médias e resumo."""
+    arquivos = [caminho] if caminho else sorted((RAIZ / "data").glob("historico*.csv"))
+    linhas: list[dict] = []
+    for arq in arquivos:
+        if not arq.exists():
+            continue
+        with arq.open(encoding="utf-8") as f:
+            linhas += list(csv.DictReader(f))
     for l in linhas:
         l["preco"] = float(l["preco"]) if l["preco"] else None
         l["data_hora"] = datetime.fromisoformat(l["data_hora"])

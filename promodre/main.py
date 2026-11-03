@@ -18,7 +18,7 @@ from pathlib import Path
 import yaml
 
 from . import alertas, historico as h, notificar
-from .scraper import buscar
+from .scraper import buscar, loja_da_url
 
 RAIZ = Path(__file__).resolve().parent.parent
 LOJAS = {"pichau": "Pichau", "kabum": "Kabum", "terabyte": "Terabyte", "amazon": "Amazon",
@@ -38,19 +38,34 @@ def carregar_itens(caminho: Path = RAIZ / "produtos.yaml") -> list[dict]:
 
 # ---------------------------------------------------------------- coleta
 
-def coletar(pausa: tuple[float, float] = (2.0, 5.0)) -> list[dict]:
+BLOQUEIOS_PARA_PULAR = 2  # depois de 2 HTTP 403 seguidos, pula o resto da loja nesta coleta
+
+
+def filtrar_urls(urls: list[str], so: set[str] | None, sem: set[str] | None) -> list[str]:
+    return [u for u in urls
+            if (not so or loja_da_url(u) in so) and (not sem or loja_da_url(u) not in sem)]
+
+
+def coletar(pausa: tuple[float, float] = (2.0, 5.0), so: set[str] | None = None,
+            sem: set[str] | None = None) -> list[dict]:
     itens = carregar_itens()
     hist = h.carregar()
     estado = h.carregar_estado()
     quando = h.agora()
     registros, avisos, falhas, esgotados = [], [], [], []
+    bloqueios: dict[str, int] = {}
 
     for item in itens:
         hist_total = h.minimos_diarios(hist, item["id"])
         hist_30d = h.minimos_diarios(hist, item["id"], dias=30)
-        for url in item["urls"]:
+        for url in filtrar_urls(item["urls"], so, sem):
+            loja = loja_da_url(url)
+            if bloqueios.get(loja, 0) >= BLOQUEIOS_PARA_PULAR:
+                falhas.append((item["nome"], LOJAS.get(loja, loja), "pulado: a loja bloqueou esta coleta"))
+                continue
             leitura = buscar(url)
             time.sleep(random.uniform(*pausa))
+            bloqueios[loja] = bloqueios.get(loja, 0) + 1 if leitura.erro == "HTTP 403" else 0
             if leitura.preco is None:
                 lista = esgotados if leitura.disponivel is False else falhas
                 lista.append((item["nome"], LOJAS.get(leitura.loja, leitura.loja), leitura.erro))
@@ -136,14 +151,17 @@ def importar_varredura(caminho: str) -> int:
 def main() -> None:
     p = argparse.ArgumentParser(prog="promodre")
     sub = p.add_subparsers(dest="cmd", required=True)
-    sub.add_parser("coletar")
+    col = sub.add_parser("coletar")
+    col.add_argument("--so", help="só estas lojas, separadas por vírgula (ex.: pichau)")
+    col.add_argument("--sem", help="pula estas lojas, separadas por vírgula (ex.: pichau)")
     sub.add_parser("resumo")
     sub.add_parser("testar")
     imp = sub.add_parser("importar-varredura")
     imp.add_argument("arquivo")
     a = p.parse_args()
     if a.cmd == "coletar":
-        coletar()
+        lista = lambda v: {x.strip().lower() for x in v.split(",")} if v else None
+        coletar(so=lista(a.so), sem=lista(a.sem))
     elif a.cmd == "resumo":
         resumo()
     elif a.cmd == "importar-varredura":

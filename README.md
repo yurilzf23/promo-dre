@@ -53,12 +53,15 @@ O arquivo `data/varredura_2026-11-03.json` tem a varredura manual que originou o
 python -m promodre.main importar-varredura data/varredura_2026-11-03.json
 ```
 
-## Se alguma loja bloquear
+## Pichau pelo seu PC
 
-Pichau e Terabyte usam proteção anti-bot e podem recusar acessos vindos dos servidores do GitHub. O projeto usa `curl_cffi` (imita o navegador Chrome) para reduzir isso. Se no log aparecer `HTTP 403` repetido para uma loja:
+A Pichau bloqueia os servidores do GitHub (HTTP 403). O GitHub coleta só Kabum e Terabyte (`coletar --sem pichau`) e a Pichau é coletada pelo seu computador.
 
-- rode a coleta no seu PC com o **Agendador de Tarefas do Windows** (`python -m promodre.main coletar` a cada 2 h). IP residencial quase nunca é bloqueado
-- ou mantenha só as lojas que funcionam no GitHub
+- A coleta do PC grava em `data/historico_pc.csv` e `data/estado_pc.json`, sem conflito com a do GitHub.
+- O resumo diário lê os dois históricos juntos.
+- Os alertas da Pichau saem direto do PC para o mesmo canal do Discord.
+
+Passo a passo de instalação e agendamento: veja as instruções enviadas no chat (Python 3.12, Git for Windows, `instalar_pc.bat`, `webhook.txt`, `coletar_pc.bat` no Agendador de Tarefas a cada 3 horas).
 
 ## Estrutura
 

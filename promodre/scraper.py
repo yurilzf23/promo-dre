@@ -231,6 +231,8 @@ def buscar(url: str, tentativas: int = 2, timeout: int = 25) -> Leitura:
             if r.status_code == 200:
                 return interpretar(r.text, url)
             ultimo_erro = f"HTTP {r.status_code}"
+            if r.status_code in (403, 404, 410):  # bloqueio ou página removida: tentar de novo não adianta
+                break
         except Exception as e:  # rede, TLS, timeout
             ultimo_erro = f"{type(e).__name__}: {e}"
         time.sleep(3 * (i + 1))
