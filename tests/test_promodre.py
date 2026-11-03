@@ -207,3 +207,13 @@ def test_403_nao_tenta_de_novo(monkeypatch):
     monkeypatch.setattr(scraper.time, "sleep", lambda s: None)
     l = scraper.buscar("https://www.pichau.com.br/x")
     assert l.erro == "HTTP 403" and len(chamadas) == 1
+
+
+def test_resumo_avisa_quando_tudo_esgotou():
+    hoje = h.agora()
+    itens = [{"id": "g", "nome": "RTX 5060", "fase": 2, "alvo": 2350, "urls": []}]
+    hist = [{"data_hora": hoje, "item": "g", "loja": "pichau", "url": "u", "preco": 2399.99, "disponivel": "False"}]
+    fases = montar_resumo(itens, hist, hoje)
+    assert fases[0]["linhas"][0]["esgotado"] is True
+    assert "esgotado em todas as lojas" in notificar.texto_resumo("R", fases, "l", html=False)
+    assert "esgotado em todas as lojas" in discord.embed_resumo("R", fases, "l")[0]["description"]

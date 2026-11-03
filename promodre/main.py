@@ -119,12 +119,13 @@ def montar_resumo(itens: list[dict], hist: list[dict], hoje: datetime) -> list[d
     """Agrupa o menor preço do dia de cada item por fase."""
     fases: dict[int, list[dict]] = {}
     for item in sorted(itens, key=lambda i: (i.get("fase", 9), i["id"])):
-        do_dia = [x for x in hist if x["item"] == item["id"] and x["preco"]
-                  and x["data_hora"].date() == hoje.date() and x.get("disponivel") not in ("False", False)]
+        lidas_hoje = [x for x in hist if x["item"] == item["id"] and x["preco"]
+                      and x["data_hora"].date() == hoje.date()]
+        do_dia = [x for x in lidas_hoje if x.get("disponivel") not in ("False", False)]
         med30 = h.mediana(h.minimos_diarios(hist, item["id"], dias=30))
         linha = {"nome": item["nome"], "alvo_fmt": brl(item.get("alvo")), "med_fmt": brl(med30) if med30 else None,
                  "med_rotulo": "melhor preço típico 30d",
-                 "preco_fmt": None, "no_alvo": False}
+                 "preco_fmt": None, "no_alvo": False, "esgotado": bool(lidas_hoje) and not do_dia}
         if do_dia:
             melhor = min(do_dia, key=lambda x: x["preco"])
             linha.update(preco_fmt=brl(melhor["preco"]), url=melhor["url"],

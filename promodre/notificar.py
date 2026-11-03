@@ -46,7 +46,8 @@ def texto_resumo(titulo: str, fases: list[dict], legenda: str, html: bool) -> st
         out.append(b(f"Fase {f['fase']}"))
         for l in f["linhas"]:
             if l.get("preco_fmt") is None:
-                out.append(f"• {l['nome']}: sem leitura hoje")
+                out.append(f"⛔ {l['nome']}: esgotado em todas as lojas monitoradas" if l.get("esgotado")
+                           else f"• {l['nome']}: sem leitura hoje")
                 continue
             sinal = "🟢" if l["no_alvo"] else "⚪"
             preco = f'<a href="{escape(l["url"])}">{l["preco_fmt"]}</a>' if html else l["preco_fmt"]

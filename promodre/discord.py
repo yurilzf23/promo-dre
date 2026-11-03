@@ -63,7 +63,8 @@ def embed_resumo(titulo: str, fases: list[dict], legenda: str) -> list[dict]:
         linhas = []
         for l in f["linhas"]:
             if l.get("preco_fmt") is None:
-                linhas.append(f"⚪ **{l['nome']}**: sem leitura hoje")
+                linhas.append(f"⛔ **{l['nome']}**: esgotado em todas as lojas monitoradas" if l.get("esgotado")
+                              else f"⚪ **{l['nome']}**: sem leitura hoje")
                 continue
             sinal = "🟢" if l["no_alvo"] else "⚪"
             extra = f" · melhor típico 30d {l['med_fmt']}" if l.get("med_fmt") else ""

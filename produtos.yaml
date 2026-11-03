@@ -59,6 +59,12 @@ itens:
       - https://www.terabyteshop.com.br/produto/36085/placa-de-video-gigabyte-nvidia-geforce-rtx-5060-windforce-8gb-gddr7-dlss-ray-tracing-gv-n5060wf2-8gd
       - https://www.terabyteshop.com.br/produto/36083/placa-de-video-gigabyte-nvidia-geforce-rtx-5060-eagle-oc-8gb-gddr7-dlss-ray-tracing-gv-n5060eagle-oc-8gd
       - https://www.terabyteshop.com.br/produto/37250/placa-de-video-colorful-nvidia-geforce-rtx-5060-battle-ax-duo-8gb-v-8gb-gddr7-dlss-ray-tracing
+      - https://www.kabum.com.br/produto/1000487
+      - https://www.kabum.com.br/produto/781225
+      - https://www.kabum.com.br/produto/781226
+      - https://www.kabum.com.br/produto/777075
+      - https://www.kabum.com.br/produto/1000741
+      - https://www.kabum.com.br/produto/912220
 
   - id: gpu_rx7600
     nome: RX 7600 8 GB
@@ -67,8 +73,8 @@ itens:
     urls:
       - https://www.pichau.com.br/placa-de-video-xfx-radeon-rx-7600-speedster-swft210-8gb-gddr6-128-bit-rx-76pswftfy
       - https://www.pichau.com.br/placa-de-video-gigabyte-radeon-rx-7600-gaming-oc-8gb-gddr6-128-bit-gv-r76gaming-oc-8gd
-      - https://www.pichau.com.br/placa-de-video-asus-radeon-rx-7600-dual-oc-v2-8gb-gddr6-128-bit-dual-rx7600-o8g-v2
-      - https://www.pichau.com.br/placa-de-video-asrock-radeon-rx-7600-phantom-gaming-oc-8gb-gddr6-128-bit-90-ga4bzz-00uanf
+      - https://www.pichau.com.br/placa-de-video-xfx-radeon-rx-7600-speedster-qick308-8gb-gddr6-128-bit-rx-76pqickby
+      - https://www.pichau.com.br/placa-de-video-powercolor-radeon-rx-7600-fighter-8gb-gddr6-128-bit-rx7600-8g-f
       - https://www.kabum.com.br/produto/459144/placa-de-video-rx-7600-challenger-asrock-amd-radeon-8gb-gddr6-90-ga41zz-00uanf
       - https://www.terabyteshop.com.br/produto/25052/placa-de-video-asrock-amd-radeon-rx-7600-steel-legend-oc-8gb-gddr6-fsr-ray-tracing-90-ga4dzz-00uanf
       - https://www.terabyteshop.com.br/produto/43356/placa-de-video-biostar-amd-radeon-rx-7600-oc-ultimate-gaming-8gb-gddr6-fsr-ray-tracing-va76s6rm81
