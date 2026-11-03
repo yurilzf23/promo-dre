@@ -229,3 +229,11 @@ def test_testar_alerta_marca_como_teste(monkeypatch):
     d = m.testar_alerta()
     assert d["nome"].startswith("[TESTE] RX 7600") and d["imagem"].endswith("x.jpg")
     assert "teste" in d["motivos"][0].lower() and enviados == [d]
+
+
+def test_resumo_ignora_varredura_como_preco_do_dia():
+    hoje = h.agora()
+    itens = [{"id": "g", "nome": "RTX 5060", "fase": 2, "alvo": 2350, "urls": []}]
+    hist = [{"data_hora": hoje, "item": "g", "loja": "kabum", "url": "v", "preco": 2359.0, "disponivel": "True", "origem": "varredura"},
+            {"data_hora": hoje, "item": "g", "loja": "kabum", "url": "u", "preco": 2899.99, "disponivel": "True", "origem": "coleta"}]
+    assert montar_resumo(itens, hist, hoje)[0]["linhas"][0]["preco_fmt"] == "R$ 2.899,99"
