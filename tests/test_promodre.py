@@ -217,3 +217,15 @@ def test_resumo_avisa_quando_tudo_esgotou():
     assert fases[0]["linhas"][0]["esgotado"] is True
     assert "esgotado em todas as lojas" in notificar.texto_resumo("R", fases, "l", html=False)
     assert "esgotado em todas as lojas" in discord.embed_resumo("R", fases, "l")[0]["description"]
+
+
+def test_testar_alerta_marca_como_teste(monkeypatch):
+    import promodre.main as m
+    from promodre.scraper import Leitura
+    enviados = []
+    monkeypatch.setattr(m, "buscar", lambda u: Leitura(u, "kabum", 1899.99, True, "RX 7600 Challenger",
+                                                        imagem="https://images.kabum.com.br/x.jpg"))
+    monkeypatch.setattr(m.notificar, "alerta", enviados.append)
+    d = m.testar_alerta()
+    assert d["nome"].startswith("[TESTE] RX 7600") and d["imagem"].endswith("x.jpg")
+    assert "teste" in d["motivos"][0].lower() and enviados == [d]

@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       tarefa:
-        description: "coletar, resumo ou testar"
+        description: "coletar, resumo, testar ou testar-alerta"
         default: coletar
 
 permissions:

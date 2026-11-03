@@ -4,6 +4,7 @@ Uso:
   python -m promodre.main coletar        # lê todas as URLs, grava histórico, manda alertas
   python -m promodre.main resumo         # manda o resumo diário (menor preço de cada item)
   python -m promodre.main testar         # manda uma mensagem de teste pro canal
+  python -m promodre.main testar-alerta  # lê um anúncio real e manda um card de alerta de teste
   python -m promodre.main importar-varredura data/varredura_2026-11-03.json
 """
 from __future__ import annotations
@@ -142,6 +143,29 @@ def resumo() -> list[dict]:
     return fases
 
 
+# ---------------------------------------------------------------- alerta de teste
+
+URL_TESTE = "https://www.kabum.com.br/produto/459144/placa-de-video-rx-7600-challenger-asrock-amd-radeon-8gb-gddr6-90-ga41zz-00uanf"
+
+
+def testar_alerta(url: str | None = None) -> dict | None:
+    """Lê um anúncio de verdade e manda o card de alerta marcado como TESTE (não mexe no histórico)."""
+    url = url or URL_TESTE
+    item = next((i for i in carregar_itens() if url in i["urls"]),
+                {"nome": "Produto de teste", "fase": None, "alvo": None})
+    print(f"Lendo {url} ...", flush=True)
+    leitura = buscar(url)
+    if leitura.preco is None:
+        print(f"Não consegui ler o preço: {leitura.erro}")
+        return None
+    dados = dados_alerta({**item, "nome": f"[TESTE] {item['nome']}"}, leitura,
+                         ["🧪 Mensagem de teste para conferir o card. Não é uma promoção.",
+                          "esgotado na loja" if leitura.disponivel is False else "em estoque na loja"])
+    print(f"Preço {dados['preco_fmt']} · foto: {leitura.imagem or 'não encontrada'}")
+    notificar.alerta(dados)
+    return dados
+
+
 # ---------------------------------------------------------------- importar varredura manual
 
 def importar_varredura(caminho: str) -> int:
@@ -165,6 +189,8 @@ def main() -> None:
     col.add_argument("--sem", help="pula estas lojas, separadas por vírgula (ex.: pichau)")
     sub.add_parser("resumo")
     sub.add_parser("testar")
+    ta = sub.add_parser("testar-alerta")
+    ta.add_argument("--url", help="anúncio a usar no teste (padrão: RX 7600 da Kabum)")
     imp = sub.add_parser("importar-varredura")
     imp.add_argument("arquivo")
     a = p.parse_args()
@@ -175,6 +201,8 @@ def main() -> None:
         resumo()
     elif a.cmd == "importar-varredura":
         importar_varredura(a.arquivo)
+    elif a.cmd == "testar-alerta":
+        testar_alerta(a.url)
     elif a.cmd == "testar":
         print("enviado" if notificar.teste() else "falhou")
 
