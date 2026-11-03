@@ -1,0 +1,16 @@
+{
+  "alertas": {
+    "mb_b550m|https://www.terabyteshop.com.br/produto/18646/placa-mae-msi-b550m-a-pro-chipset-b550-amd-am4-matx-ddr4": {
+      "preco": 519.99,
+      "quando": "2026-11-03T02:16-03:00"
+    },
+    "monitor_180hz|https://www.terabyteshop.com.br/produto/38152/monitor-gamer-duex-24-pol-full-hd-1ms-180hz-ips-freesync-hdmidp-dxmo24f180": {
+      "preco": 569.99,
+      "quando": "2026-11-03T02:16-03:00"
+    },
+    "monitor_180hz|https://www.kabum.com.br/produto/752839/monitor-gamer-duex-24-full-hd-180hz-1ms-ips-adaptative-sync-hdr-10-hdmi-e-displayport-som-integrado-preto-dxmo24f180s": {
+      "preco": 589.99,
+      "quando": "2026-11-03T02:16-03:00"
+    }
+  }
+}
