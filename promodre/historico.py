@@ -53,6 +53,19 @@ def precos_do_item(hist: list[dict], item: str, dias: int | None = None) -> list
     ]
 
 
+def minimos_diarios(hist: list[dict], item: str, dias: int | None = None) -> list[float]:
+    """Menor preço disponível de cada dia: é a referência de 'quanto essa peça costuma custar no melhor lugar'."""
+    limite = agora() - timedelta(days=dias) if dias else None
+    por_dia: dict = {}
+    for x in hist:
+        if (x["item"] != item or not x["preco"] or x.get("disponivel") in ("False", False)
+                or (limite and x["data_hora"] < limite)):
+            continue
+        d = x["data_hora"].date()
+        por_dia[d] = min(por_dia.get(d, x["preco"]), x["preco"])
+    return [por_dia[d] for d in sorted(por_dia)]
+
+
 def mediana(valores: list[float]) -> float | None:
     return statistics.median(valores) if valores else None
 

@@ -7,9 +7,11 @@ Monitor de preços dos upgrades do PC com alertas no Discord. Ele consulta diret
 - **Coleta a cada 2 horas** (GitHub Actions): lê o preço à vista (PIX) de cada URL do `produtos.yaml` e grava em `data/historico.csv`.
 - **Alerta na hora** quando o preço:
   - fica igual ou abaixo do **alvo** do item
-  - cai **8% abaixo da mediana dos últimos 30 dias** (a partir de 5 leituras)
-  - bate o **menor preço já registrado**
-- **Não repete** o mesmo alerta (item + loja) por 24 h, a não ser que o preço caia mais.
+  - cai **8% abaixo do melhor preço típico dos últimos 30 dias** (mediana do menor preço de cada dia, a partir de 5 dias de histórico)
+  - bate o **menor preço já registrado** (também a partir de 5 dias)
+- **Não repete** o mesmo alerta (item + loja + preço) por 7 dias. Se o preço cair mais, avisa de novo na hora.
+- **Foto do produto** no card do alerta, puxada da página da loja.
+- Produto esgotado não conta como falha: aparece separado no log.
 - **Resumo diário às 08:41**: menor preço de cada item no dia, alvo e mediana de 30 dias, um card por fase (fica verde quando algum item da fase está no alvo).
 - **Telegram opcional**: se você cadastrar também os secrets do Telegram, os avisos saem nos dois.
 

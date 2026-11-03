@@ -39,6 +39,7 @@ class Leitura:
     disponivel: bool | None
     titulo: str | None = None
     erro: str | None = None
+    imagem: str | None = None  # URL da foto do produto
 
 
 # ---------------------------------------------------------------- utilidades
@@ -106,6 +107,35 @@ def _oferta_json_ld(html: str) -> tuple[float | None, bool | None, str | None]:
             preco = preco_br(str(preco))
         return preco, disponivel, d.get("name")
     return None, None, None
+
+
+def _imagem(html: str, url: str) -> str | None:
+    """Foto do produto: og:image, depois o campo image do JSON-LD."""
+    candidatos: list[str] = []
+    for padrao in (
+        r'<meta[^>]+property=["\']og:image(?::secure_url)?["\'][^>]+content=["\']([^"\']+)',
+        r'<meta[^>]+content=["\']([^"\']+)["\'][^>]+property=["\']og:image["\']',
+        r'<meta[^>]+name=["\']twitter:image["\'][^>]+content=["\']([^"\']+)',
+    ):
+        candidatos += re.findall(padrao, html, re.I)
+    for d in _json_ld(html):
+        img = d.get("image")
+        if isinstance(img, list) and img:
+            img = img[0]
+        if isinstance(img, dict):
+            img = img.get("url") or img.get("contentUrl")
+        if isinstance(img, str):
+            candidatos.append(img)
+    for c in candidatos:
+        c = unescape(c.strip())
+        if c.startswith("//"):
+            c = "https:" + c
+        elif c.startswith("/"):
+            base = urlparse(url)
+            c = f"{base.scheme}://{base.netloc}{c}"
+        if c.startswith("https://") and not re.search(r"logo|placeholder|sem-imagem", c, re.I):
+            return c
+    return None
 
 
 def _titulo(html: str) -> str | None:
@@ -186,8 +216,11 @@ def interpretar(html: str, url: str) -> Leitura:
     if preco is None and loja in LEITORES:
         preco, disp2 = ler_generico(html)
         disp = disp if disp is not None else disp2
+    if preco is not None and preco <= 0:  # produto esgotado aparece como R$ 0,00 em algumas lojas
+        return Leitura(url=url, loja=loja, preco=None, disponivel=False, titulo=_titulo(html),
+                       erro="esgotado (sem preço)", imagem=_imagem(html, url))
     return Leitura(url=url, loja=loja, preco=preco, disponivel=disp, titulo=_titulo(html),
-                   erro=None if preco else "preço não encontrado na página")
+                   erro=None if preco else "preço não encontrado na página", imagem=_imagem(html, url))
 
 
 def buscar(url: str, tentativas: int = 2, timeout: int = 25) -> Leitura:

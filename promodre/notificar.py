@@ -13,12 +13,12 @@ def _telegram_configurado() -> bool:
 
 
 def alerta(dados: dict) -> None:
-    """dados: nome, preco_fmt, loja, url, motivos, titulo_pagina, fase"""
+    """dados: nome, preco_fmt, loja, url, motivos, titulo_pagina, fase, imagem"""
     enviado = False
     if discord.configurado():
         enviado |= discord.enviar({"embeds": [discord.embed_alerta(
             dados["nome"], dados["preco_fmt"], dados["loja"], dados["url"],
-            dados["motivos"], dados.get("titulo_pagina"), dados.get("fase"))]})
+            dados["motivos"], dados.get("titulo_pagina"), dados.get("fase"), dados.get("imagem"))]})
     if _telegram_configurado():
         linhas = [f"🔥 <b>{escape(dados['nome'])}</b> por <b>{dados['preco_fmt']}</b> no PIX ({dados['loja']})",
                   *[f"• {escape(m)}" for m in dados["motivos"]],
@@ -50,7 +50,7 @@ def texto_resumo(titulo: str, fases: list[dict], legenda: str, html: bool) -> st
                 continue
             sinal = "🟢" if l["no_alvo"] else "⚪"
             preco = f'<a href="{escape(l["url"])}">{l["preco_fmt"]}</a>' if html else l["preco_fmt"]
-            extra = f" · mediana 30d {l['med_fmt']}" if l.get("med_fmt") else ""
+            extra = f" · melhor típico 30d {l['med_fmt']}" if l.get("med_fmt") else ""
             out.append(f"{sinal} {escape(l['nome']) if html else l['nome']}: {preco} ({l['loja']}) · alvo {l['alvo_fmt']}{extra}")
     out += ["", legenda]
     return "\n".join(out)

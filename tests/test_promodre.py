@@ -46,6 +46,16 @@ def test_terabyte_val_vista_e_esgotado():
     assert l.disponivel is False
 
 
+def test_imagem_do_produto():
+    l = interpretar((FX / "pichau.html").read_text(), "https://www.pichau.com.br/produto")
+    assert l.imagem == "https://media.pichau.com.br/media/catalog/product/cache/x/1/0/100-100001503wof.jpg"
+    l = interpretar((FX / "kabum.html").read_text(), "https://www.kabum.com.br/produto/320797/x")
+    assert l.imagem == "https://images.kabum.com.br/produtos/fotos/320797/processador_g.jpg"
+    l = interpretar((FX / "terabyte.html").read_text(), "https://www.terabyteshop.com.br/produto/21648/x")
+    assert l.imagem == "https://img.terabyteshop.com.br/produto/g/cooler-ak400_1.jpg"
+    assert interpretar("<h1>x</h1>", "https://www.kabum.com.br/p").imagem is None
+
+
 def test_generico_meta_tag():
     html = '<meta property="product:price:amount" content="1234.50"><h1>Algo</h1>'
     l = interpretar(html, "https://loja.exemplo.com/p")
@@ -58,24 +68,39 @@ def test_pagina_sem_preco():
 
 
 def test_motivos_alvo_mediana_e_minima():
-    hist = [2700, 2650, 2690, 2710, 2680]
-    m = alertas.motivos(2300, 2350, hist, hist)
+    minimos = [2700, 2650, 2690, 2710, 2680]  # melhor preço de cada dia
+    m = alertas.motivos(2300, 2350, minimos, minimos)
     assert len(m) == 3
     assert "alvo" in m[0] and "R$ 2.350" in m[0]
-    assert alertas.motivos(2690, 2350, hist, hist) == []
+    assert alertas.motivos(2690, 2350, minimos, minimos) == []
 
 
-def test_mediana_exige_amostras_minimas():
+def test_mediana_exige_dias_minimos():
     assert alertas.motivos(1000, None, [2000, 2000], [2000, 2000]) == []
 
 
-def test_nao_repete_alerta_em_24h_a_menos_que_caia_mais():
+def test_loja_mais_barata_de_sempre_nao_dispara_alerta():
+    t = h.agora()
+    hist = [{"data_hora": t - timedelta(days=d), "item": "mb", "preco": p, "disponivel": "True"}
+            for d in range(6) for p in (519.99, 614.43, 856.99)]
+    minimos = h.minimos_diarios(hist, "mb", dias=30)
+    assert minimos == [519.99] * 6
+    assert alertas.motivos(519.99, 510, minimos, minimos) == []
+
+
+def test_esgotado_com_preco_zero_vira_sem_preco():
+    html = '<script type="application/ld+json">{"name":"X","offers":{"price":"0.00","availability":"http://schema.org/OutOfStock"}}</script><h1>X</h1>'
+    l = interpretar(html, "https://www.terabyteshop.com.br/produto/1/x")
+    assert l.preco is None and l.disponivel is False and "esgotado" in l.erro
+
+
+def test_nao_repete_alerta_em_7_dias_a_menos_que_caia_mais():
     est = {"alertas": {}}
     t0 = datetime(2026, 11, 3, 10, tzinfo=h.TZ)
     alertas.marcar_avisado(est, "gpu", "u", 2300, t0)
-    assert alertas.ja_avisado(est, "gpu", "u", 2300, t0 + timedelta(hours=5))
+    assert alertas.ja_avisado(est, "gpu", "u", 2300, t0 + timedelta(days=3))
     assert not alertas.ja_avisado(est, "gpu", "u", 2250, t0 + timedelta(hours=5))
-    assert not alertas.ja_avisado(est, "gpu", "u", 2300, t0 + timedelta(hours=25))
+    assert not alertas.ja_avisado(est, "gpu", "u", 2300, t0 + timedelta(days=8))
 
 
 def test_historico_ida_e_volta(tmp_path):
@@ -125,11 +150,12 @@ def test_discord_alerta_monta_embed(monkeypatch):
     monkeypatch.setattr(discord.time, "sleep", lambda s: None)
     notificar.alerta({"nome": "RTX 5060 8 GB", "preco_fmt": "R$ 2.299,99", "loja": "Kabum",
                       "url": "https://www.kabum.com.br/p", "motivos": ["abaixo do alvo de R$ 2.350"],
-                      "titulo_pagina": "Placa X", "fase": 2})
+                      "titulo_pagina": "Placa X", "fase": 2, "imagem": "https://img.exemplo/gpu.jpg"})
     e = enviados[0]["embeds"][0]
     assert enviados[0]["username"] == "Promo Dre"
     assert e["url"] == "https://www.kabum.com.br/p" and "RTX 5060" in e["title"]
     assert any(f["value"] == "**R$ 2.299,99**" for f in e["fields"])
+    assert e["thumbnail"]["url"] == "https://img.exemplo/gpu.jpg"
 
 
 def test_discord_respeita_limite_429(monkeypatch):

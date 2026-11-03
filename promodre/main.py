@@ -43,16 +43,17 @@ def coletar(pausa: tuple[float, float] = (2.0, 5.0)) -> list[dict]:
     hist = h.carregar()
     estado = h.carregar_estado()
     quando = h.agora()
-    registros, avisos, falhas = [], [], []
+    registros, avisos, falhas, esgotados = [], [], [], []
 
     for item in itens:
-        hist_total = h.precos_do_item(hist, item["id"])
-        hist_30d = h.precos_do_item(hist, item["id"], dias=30)
+        hist_total = h.minimos_diarios(hist, item["id"])
+        hist_30d = h.minimos_diarios(hist, item["id"], dias=30)
         for url in item["urls"]:
             leitura = buscar(url)
             time.sleep(random.uniform(*pausa))
             if leitura.preco is None:
-                falhas.append((item["nome"], LOJAS.get(leitura.loja, leitura.loja), leitura.erro))
+                lista = esgotados if leitura.disponivel is False else falhas
+                lista.append((item["nome"], LOJAS.get(leitura.loja, leitura.loja), leitura.erro))
                 continue
             registros.append({"data_hora": quando, "item": item["id"], "loja": leitura.loja, "url": url,
                               "preco": leitura.preco, "disponivel": leitura.disponivel, "origem": "coleta"})
@@ -68,7 +69,9 @@ def coletar(pausa: tuple[float, float] = (2.0, 5.0)) -> list[dict]:
 
     for a in avisos:
         notificar.alerta(a)
-    print(f"{len(registros)} preços lidos, {len(avisos)} alertas, {len(falhas)} falhas")
+    print(f"{len(registros)} preços lidos, {len(avisos)} alertas, {len(esgotados)} esgotados, {len(falhas)} falhas")
+    for f in esgotados:
+        print("  esgotado:", *f[:2])
     for f in falhas:
         print("  falha:", *f)
     return registros
@@ -83,6 +86,7 @@ def dados_alerta(item: dict, leitura, motivos: list[str]) -> dict:
         "motivos": motivos,
         "titulo_pagina": leitura.titulo,
         "fase": item.get("fase"),
+        "imagem": leitura.imagem,
     }
 
 
@@ -94,8 +98,9 @@ def montar_resumo(itens: list[dict], hist: list[dict], hoje: datetime) -> list[d
     for item in sorted(itens, key=lambda i: (i.get("fase", 9), i["id"])):
         do_dia = [x for x in hist if x["item"] == item["id"] and x["preco"]
                   and x["data_hora"].date() == hoje.date() and x.get("disponivel") not in ("False", False)]
-        med30 = h.mediana(h.precos_do_item(hist, item["id"], dias=30))
+        med30 = h.mediana(h.minimos_diarios(hist, item["id"], dias=30))
         linha = {"nome": item["nome"], "alvo_fmt": brl(item.get("alvo")), "med_fmt": brl(med30) if med30 else None,
+                 "med_rotulo": "melhor preço típico 30d",
                  "preco_fmt": None, "no_alvo": False}
         if do_dia:
             melhor = min(do_dia, key=lambda x: x["preco"])

@@ -35,7 +35,7 @@ def enviar(payload: dict, webhook: str | None = None, tentativas: int = 3) -> bo
 
 
 def embed_alerta(nome: str, preco_fmt: str, loja: str, url: str, motivos: list[str],
-                 titulo_pagina: str | None, fase: int | None) -> dict:
+                 titulo_pagina: str | None, fase: int | None, imagem: str | None = None) -> dict:
     campos = [
         {"name": "Preço no PIX", "value": f"**{preco_fmt}**", "inline": True},
         {"name": "Loja", "value": loja, "inline": True},
@@ -51,6 +51,8 @@ def embed_alerta(nome: str, preco_fmt: str, loja: str, url: str, motivos: list[s
     }
     if titulo_pagina:
         e["footer"] = {"text": titulo_pagina[:200]}
+    if imagem and imagem.startswith("https://"):
+        e["thumbnail"] = {"url": imagem}
     return e
 
 
@@ -64,7 +66,7 @@ def embed_resumo(titulo: str, fases: list[dict], legenda: str) -> list[dict]:
                 linhas.append(f"⚪ **{l['nome']}**: sem leitura hoje")
                 continue
             sinal = "🟢" if l["no_alvo"] else "⚪"
-            extra = f" · mediana 30d {l['med_fmt']}" if l.get("med_fmt") else ""
+            extra = f" · melhor típico 30d {l['med_fmt']}" if l.get("med_fmt") else ""
             linhas.append(f"{sinal} **{l['nome']}**: [{l['preco_fmt']}]({l['url']}) ({l['loja']})\n"
                           f"　alvo {l['alvo_fmt']}{extra}")
         algum_ok = any(l.get("no_alvo") for l in f["linhas"])
