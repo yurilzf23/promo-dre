@@ -74,7 +74,9 @@ def embed_resumo(titulo: str, fases: list[dict], legenda: str) -> list[dict]:
         algum_ok = any(l.get("no_alvo") for l in f["linhas"])
         e = {
             "title": f.get("titulo") or f"Fase {f['fase']}",
-            "description": ((f"**{f['total']}**\n\n" if f.get("total") else "") + "\n".join(linhas))[:4000]
+            "description": ((f"**{f['total']}**\n\n" if f.get("total") else "")
+                            + ("**Combos hoje**\n" + "\n".join(f["combos"]) + "\n\n" if f.get("combos") else "")
+                            + "\n".join(linhas))[:4000]
                            or "Sem itens.",
             "color": COR_OK if algum_ok else COR_RESUMO,
         }

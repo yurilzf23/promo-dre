@@ -47,6 +47,9 @@ def texto_resumo(titulo: str, fases: list[dict], legenda: str, html: bool) -> st
         out.append(b(f.get("titulo") or f"Fase {f['fase']}"))
         if f.get("total"):
             out.append(esc(f["total"]))
+        if f.get("combos"):
+            out.append("Combos hoje:")
+            out += [f"  {esc(c)}" for c in f["combos"]]
         for l in f["linhas"]:
             nome = esc(l["nome"]) + (" (alternativa)" if l.get("alternativa") else "")
             if l.get("preco_fmt") is None:

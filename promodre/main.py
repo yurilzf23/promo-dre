@@ -37,6 +37,10 @@ def carregar_itens(caminho: Path = RAIZ / "produtos.yaml") -> list[dict]:
     return yaml.safe_load(caminho.read_text(encoding="utf-8"))["itens"]
 
 
+def carregar_combos(caminho: Path = RAIZ / "produtos.yaml") -> list[dict]:
+    return yaml.safe_load(caminho.read_text(encoding="utf-8")).get("combos") or []
+
+
 # ---------------------------------------------------------------- coleta
 
 BLOQUEIOS_PARA_PULAR = 2  # depois de 2 HTTP 403 seguidos, pula o resto da loja nesta coleta
@@ -128,10 +132,12 @@ def _melhor_do_dia(hist: list[dict], item_id: str, dia) -> tuple[dict | None, bo
     return (min(disp, key=lambda x: x["preco"]) if disp else None), bool(lidas) and not disp
 
 
-def montar_resumo(itens: list[dict], hist: list[dict], hoje: datetime) -> list[dict]:
+def montar_resumo(itens: list[dict], hist: list[dict], hoje: datetime,
+                  combos: list[dict] | None = None) -> list[dict]:
     """Menor preço do dia de cada item, agrupado por fase, com distância do alvo e variação desde ontem."""
     ontem = hoje.date() - timedelta(days=1)
     fases: dict[int, dict] = {}
+    precos_hoje: dict[str, float] = {}
     for item in sorted(itens, key=lambda i: i.get("fase", 9)):  # mantém a ordem do produtos.yaml dentro da fase
         fase = fases.setdefault(item.get("fase", 9), {"fase": item.get("fase", 9), "linhas": [],
                                                       "soma": 0.0, "soma_alvo": 0.0, "faltando": []})
@@ -142,6 +148,7 @@ def montar_resumo(itens: list[dict], hist: list[dict], hoje: datetime) -> list[d
                  "preco_fmt": None, "no_alvo": False, "variacao": "", "detalhe": ""}
         if melhor:
             preco = melhor["preco"]
+            precos_hoje[item["id"]] = preco
             linha.update(preco_fmt=brl(preco), url=melhor["url"], loja=LOJAS.get(melhor["loja"], melhor["loja"]),
                          no_alvo=bool(alvo and preco <= alvo))
             if alvo:
@@ -165,21 +172,38 @@ def montar_resumo(itens: list[dict], hist: list[dict], hoje: datetime) -> list[d
                 fase["faltando"].append(linha["nome"])
         fase["linhas"].append(linha)
 
+    por_id = {i["id"]: i for i in itens}
+    combos_fase: dict[int, list[dict]] = {}
+    for c in combos or []:
+        faltam = [por_id[i].get("curto") or por_id[i]["nome"] for i in c["itens"] if i in por_id and i not in precos_hoje]
+        total_c = sum(precos_hoje.get(i, 0) for i in c["itens"])
+        alvo_c = sum(por_id[i].get("alvo") or 0 for i in c["itens"] if i in por_id)
+        combos_fase.setdefault(c.get("fase", 1), []).append(
+            {"nome": c["nome"], "total": None if faltam else total_c, "alvo": alvo_c, "faltam": faltam})
+
     saida = []
     for n, f in sorted(fases.items()):
         titulo = f"Fase {n}" + (f" · {NOMES_FASE[n]}" if n in NOMES_FASE else "")
+        linhas_combo = []
+        lista = sorted(combos_fase.get(n, []), key=lambda c: (c["total"] is None, c["total"] or 0))
+        for k, c in enumerate(lista):
+            if c["total"] is None:
+                linhas_combo.append(f"{c['nome']}: sem preço hoje ({', '.join(c['faltam'])})")
+            else:
+                marca = "💰 " if k == 0 else ""
+                linhas_combo.append(f"{marca}{c['nome']}: {brl(c['total'])} · alvo {brl(c['alvo'])}")
         total = ""
-        if f["soma"]:
+        if f["soma"] and not linhas_combo:
             total = f"Hoje {brl(f['soma'])} · alvo {brl(f['soma_alvo'])}"
             if f["faltando"]:
                 total += f" (sem {', '.join(f['faltando'])})"
-        saida.append({"fase": n, "titulo": titulo, "total": total, "linhas": f["linhas"]})
+        saida.append({"fase": n, "titulo": titulo, "total": total, "combos": linhas_combo, "linhas": f["linhas"]})
     return saida
 
 
 def resumo() -> list[dict]:
     hoje = h.agora()
-    fases = montar_resumo(carregar_itens(), h.carregar(), hoje)
+    fases = montar_resumo(carregar_itens(), h.carregar(), hoje, carregar_combos())
     notificar.resumo(f"📊 Promo Dre · resumo de {hoje:%d/%m/%Y}", fases, LEGENDA)
     return fases
 

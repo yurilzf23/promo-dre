@@ -10,8 +10,27 @@
 #   urls         páginas de produto. Pichau é coletada pelo PC; Kabum e Terabyte pelo GitHub.
 #                Na Kabum basta https://www.kabum.com.br/produto/NUMERO
 #
+# combos: conjuntos de peças comparados lado a lado no resumo (soma do menor preço do dia de cada peça).
+#
 # Alvos marcados "provisório" foram definidos sem varredura completa. Ajuste depois de ~1 semana
 # de histórico, olhando o "típico 30d" que aparece no resumo.
+
+combos:
+  - nome: AMD 5700X3D
+    fase: 1
+    itens: [cpu_5700x3d, mb_b550m, cooler_ak400]
+  - nome: AMD 5800X3D
+    fase: 1
+    itens: [cpu_5800x3d, mb_b550m, cooler_ak400]
+  - nome: AMD 5700X
+    fase: 1
+    itens: [cpu_5700x, mb_b550m, cooler_ak400]
+  - nome: Intel 14400F
+    fase: 1
+    itens: [cpu_14400f, mb_b760m_ddr4]
+  - nome: Intel 12400F
+    fase: 1
+    itens: [cpu_12400f, mb_b760m_ddr4]
 
 itens:
   # =============== Fase 1: plataforma ===============
@@ -75,6 +94,48 @@ itens:
       - https://www.pichau.com.br/cooler-para-processador-deepcool-ak400-120mm-r-ak400-bknnmn-g-1
       - https://www.terabyteshop.com.br/produto/21648/cooler-para-processador-deepcool-ak400-120mm-intel-amd-r-ak400-bknnmn-g-1
       - https://www.pichau.com.br/cooler-para-processador-deepcool-ak400-digital-120mm-preto-r-ak400-bkadmn-g
+
+  # ---------- Fase 1: alternativa Intel (LGA 1700, reaproveita a DDR4) ----------
+  - id: cpu_14400f
+    nome: Intel Core i5-14400F (vem com cooler)
+    curto: Core i5-14400F
+    fase: 1
+    alvo: 990  # provisório
+    recomendado: false
+    urls:
+      - https://www.pichau.com.br/processador-intel-core-i5-14400f-10-core-16-threads-3-5ghz-4-7ghz-turbo-cache-20mb-lga1700-bx8071514400f
+      - https://www.pichau.com.br/processador-intel-core-i5-14400f-10-core-16-threads-3-5ghz-4-7ghz-turbo-cache-20mb-lga1700-bx8071514400f-br
+      - https://www.terabyteshop.com.br/produto/27612/processador-intel-core-i5-14400f-35-ghz-47ghz-turbo-14-geracao-10-cores-16-threads-lga-1700-bx8071514400f
+      - https://www.kabum.com.br/produto/904658
+      - https://www.kabum.com.br/produto/1059052
+
+  - id: cpu_12400f
+    nome: Intel Core i5-12400F (vem com cooler)
+    curto: Core i5-12400F
+    fase: 1
+    alvo: 780  # provisório
+    recomendado: false
+    urls:
+      - https://www.pichau.com.br/processador-intel-core-i5-12400f-6-core-12-threads-2-5ghz-4-4ghz-turbo-cache-18mb-lga1700-bx8071512400f
+      - https://www.pichau.com.br/processador-intel-core-i5-12400f-6-core-12-threads-2-5ghz-4-4ghz-turbo-cache-18mb-lga1700-bx8071512400f-br
+      - https://www.terabyteshop.com.br/produto/20072/processador-intel-core-i5-12400f-25ghz-44ghz-turbo-12-geracao-6-cores-12-threads-lga-1700-bx8071512400f
+      - https://www.kabum.com.br/produto/283718
+      - https://www.kabum.com.br/produto/1059159
+
+  - id: mb_b760m_ddr4
+    nome: Placa-mãe B760M DDR4 (LGA 1700)
+    curto: Placa B760M DDR4
+    fase: 1
+    alvo: 690  # provisório
+    recomendado: false
+    urls:
+      - https://www.terabyteshop.com.br/produto/29444/placa-mae-msi-pro-b760m-e-ddr4-chipset-b760-intel-lga-1700-matx-ddr4
+      - https://www.terabyteshop.com.br/produto/27375/placa-mae-msi-pro-b760m-p-ddr4-chipset-b760-intel-lga-1700-matx-ddr4
+      - https://www.terabyteshop.com.br/produto/24709/placa-mae-gigabyte-b760m-aorus-elite-ddr4-chipset-b760-intel-lga-1700-matx-ddr4
+      - https://www.kabum.com.br/produto/548936
+      - https://www.kabum.com.br/produto/404816
+      - https://www.kabum.com.br/produto/914298
+      - https://www.kabum.com.br/produto/941862
 
   # =============== Fase 2: placa de vídeo ===============
   - id: gpu_rtx5060

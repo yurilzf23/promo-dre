@@ -270,3 +270,23 @@ def test_total_avisa_item_recomendado_sem_preco():
     f = montar_resumo(itens, hist, hoje)[0]
     assert f["total"] == "Hoje R$ 520,00 · alvo R$ 500,00 (sem CPU)"
     assert f["linhas"][0]["esgotado"] is True
+
+
+def test_combos_comparam_plataformas():
+    hoje = h.agora()
+    itens = [{"id": "a_cpu", "nome": "Ryzen", "fase": 1, "alvo": 900, "urls": []},
+             {"id": "a_mb", "nome": "B550M", "fase": 1, "alvo": 500, "urls": []},
+             {"id": "i_cpu", "nome": "i5", "fase": 1, "alvo": 1000, "recomendado": False, "urls": []},
+             {"id": "i_mb", "nome": "B760M", "fase": 1, "alvo": 700, "recomendado": False, "urls": []},
+             {"id": "x_cpu", "nome": "X3D", "fase": 1, "alvo": 1500, "recomendado": False, "urls": []}]
+    reg = lambda i, p: {"data_hora": hoje, "item": i, "loja": "kabum", "url": i, "preco": p, "disponivel": "True", "origem": "coleta"}
+    hist = [reg("a_cpu", 979.0), reg("a_mb", 499.99), reg("i_cpu", 1029.99), reg("i_mb", 752.88)]
+    combos = [{"nome": "AMD", "fase": 1, "itens": ["a_cpu", "a_mb"]},
+              {"nome": "Intel", "fase": 1, "itens": ["i_cpu", "i_mb"]},
+              {"nome": "AMD X3D", "fase": 1, "itens": ["x_cpu", "a_mb"]}]
+    f = montar_resumo(itens, hist, hoje, combos)[0]
+    assert f["combos"] == ["💰 AMD: R$ 1.478,99 · alvo R$ 1.400,00",
+                           "Intel: R$ 1.782,87 · alvo R$ 1.700,00",
+                           "AMD X3D: sem preço hoje (X3D)"]
+    assert f["total"] == ""  # com combos, o total genérico da fase sai
+    assert "**Combos hoje**" in discord.embed_resumo("R", [f], "l")[0]["description"]
