@@ -15,6 +15,14 @@
     "mb_b550m|https://www.kabum.com.br/produto/941257": {
       "preco": 499.99,
       "quando": "2026-11-03T12:00-03:00"
+    },
+    "gabinete_xr|https://www.kabum.com.br/produto/905390": {
+      "preco": 399.99,
+      "quando": "2026-11-04T14:15-03:00"
+    },
+    "mouse_g703|https://www.kabum.com.br/produto/102651": {
+      "preco": 359.99,
+      "quando": "2026-11-04T14:15-03:00"
     }
   }
 }
