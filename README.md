@@ -17,8 +17,17 @@ Monitor de preços dos upgrades do PC, com um site para consultar tudo. O bot l�
 - Todas as ofertas lidas de cada peça, com as esgotadas riscadas.
 - Combos de plataforma (AMD x Intel) com o total do dia.
 - Resumo no topo: total do upgrade recomendado, itens no alvo, quedas e esgotados.
-- Filtros por fase, busca, "só recomendados", "só no alvo", ordenação e **modo claro/escuro** (segue o sistema e lembra sua escolha).
+- Menu lateral por categoria (processador, placa de vídeo, teclado…), mostrando só as categorias com anúncio à venda.
+- Filtros por busca, "só recomendados", "só no alvo", ordenação e **modo claro/escuro** (segue o sistema e lembra sua escolha).
 - Preço com mais de 48 h sem leitura não aparece como atual.
+
+## Procurar preço de qualquer produto
+
+Na caixa **Procurar preço** do site, digite o modelo ou cole o link de um produto da Kabum ou da Terabyte. O site abre uma issue `Buscar: <termo>` no GitHub (é só clicar em *Create*), o workflow `busca.yml` pesquisa nas lojas e o resultado aparece em **Minhas buscas** em 1 a 3 minutos (também vem como comentário na issue, que é fechada sozinha).
+
+- Cada resultado tem **+ Monitorar**, que abre uma issue `Monitorar: <link> | <termo>` e coloca o anúncio na lista fixa (categoria Outros, alvo 8% abaixo do preço do dia).
+- Só pedidos do dono do repositório são atendidos.
+- A Pichau fica de fora da busca porque bloqueia os servidores do GitHub.
 
 ## Ativar o site (uma vez)
 
@@ -58,6 +67,7 @@ promodre/scraper.py      leitura de preço e foto por loja (Pichau, Kabum, Terab
 promodre/alertas.py      regras de alerta e anti-repetição
 promodre/historico.py    histórico CSV, estado dos alertas e fotos
 promodre/site.py         gera docs/dados.json para o site
+promodre/busca.py        busca sob demanda e "Monitorar" (pedidos por issue)
 promodre/notificar.py    saída dos avisos (hoje só o log)
 promodre/main.py         comandos coletar / site / resumo / importar-varredura
 docs/                    site (index.html + dados.json)

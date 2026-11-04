@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import pytest
+import yaml
 
 from promodre import alertas, historico as h, notificar
 from promodre.main import brl, carregar_itens, montar_resumo
@@ -117,7 +118,7 @@ def test_produtos_yaml_valido():
     ids = [i["id"] for i in itens]
     assert len(ids) == len(set(ids))
     for i in itens:
-        assert i["urls"] and i["alvo"] > 0 and i["fase"] in (1, 2, 3, 4, 5)
+        assert i["urls"] and i["alvo"] > 0 and i["fase"] in (1, 2, 3, 4, 5, 6)
 
 
 def test_resumo_marca_item_no_alvo():
@@ -275,3 +276,41 @@ def test_site_monta_melhor_oferta_e_combos():
     assert cpu["variacao"] == -51.0 and cpu["imagem"] == "https://img/x.jpg" and len(cpu["ofertas"]) == 1
     assert mb["melhor"] is None and not mb["esgotado"]
     assert d["combos"][0]["total"] is None and d["combos"][0]["faltam"] == ["Placa Y"]
+
+
+def test_categoria_pelo_id():
+    from promodre.site import categoria
+    assert categoria({"id": "mousepad_90x40"}) == "Mousepad"
+    assert categoria({"id": "mouse_g703"}) == "Mouse"
+    assert categoria({"id": "gpu_rtx5060"}) == "Placa de vídeo"
+    assert categoria({"id": "xyz", "categoria": "Cadeira"}) == "Cadeira"
+
+
+def test_busca_relevancia_e_titulo():
+    from promodre import busca
+    assert busca.ler_titulo("Buscar: RX 9060 XT 16GB") == ("buscar", "RX 9060 XT 16GB")
+    assert busca.ler_titulo("monitorar: https://x/1 | rx") == ("monitorar", "https://x/1 | rx")
+    t = "Placa de Vídeo ASUS Dual Radeon RX 9060 XT OC, 16 GB GDDR6"
+    assert busca.relevancia("RX 9060 XT 16GB", t) == 1.0
+    assert busca.relevancia("RTX 5060", t) < 0.6
+    html = '<a href="/produto/987654/x">a</a><a href="https://www.kabum.com.br/produto/987654">b</a><a href="/produto/123456/y">'
+    assert busca.links_kabum(html) == ["https://www.kabum.com.br/produto/987654", "https://www.kabum.com.br/produto/123456"]
+    assert busca.links_terabyte('<a href="/produto/27612/processador-intel-i5">') == [
+        "https://www.terabyteshop.com.br/produto/27612/processador-intel-i5"]
+
+
+def test_monitorar_cria_item_e_acrescenta_loja(tmp_path, monkeypatch):
+    from promodre import busca
+    prod = tmp_path / "produtos.yaml"
+    prod.write_text("itens:\n  - id: cpu_x\n    nome: CPU\n    fase: 1\n    alvo: 10\n    urls:\n      - https://a/1\n", encoding="utf-8")
+    monkeypatch.setattr(busca, "ARQ_PRODUTOS", prod)
+    monkeypatch.setattr(busca, "ARQ_BUSCAS", tmp_path / "buscas.json")
+    busca.salvar_buscas([{"termo": "rx 9060", "resultados": [
+        {"url": "https://k/9", "titulo": "Placa RX 9060 XT", "preco": 2999.9},
+        {"url": "https://t/9", "titulo": "Placa RX 9060 XT", "preco": 3050.0}]}])
+    assert "entrou no monitoramento" in busca.monitorar("https://k/9 | rx 9060")
+    assert "mais uma loja" in busca.monitorar("https://t/9 | rx 9060")
+    assert "já está monitorado" in busca.monitorar("https://a/1 | cpu")
+    item = yaml.safe_load(prod.read_text(encoding="utf-8"))["itens"][1]
+    assert item["id"] == "extra_rx_9060" and item["urls"] == ["https://k/9", "https://t/9"]
+    assert item["alvo"] == 2750 and item["categoria"] == "Outros"

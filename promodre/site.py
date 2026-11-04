@@ -6,10 +6,28 @@ from datetime import timedelta
 from pathlib import Path
 
 from . import historico as h
-from .main import LOJAS, NOMES_FASE, RAIZ, carregar_combos, carregar_itens
+from .main import LOJAS, RAIZ, carregar_combos, carregar_itens
 
 ARQ_SAIDA = RAIZ / "docs" / "dados.json"
 JANELA_OFERTA_H = 48  # leitura mais velha que isso não conta como "preço atual"
+
+# categoria de cada item pelo começo do id (ou pelo campo "categoria" no produtos.yaml); a ordem é a do menu
+CATEGORIAS = [
+    ("cpu_", "Processador"), ("mb_", "Placa-mãe"), ("cooler_", "Cooler"), ("gpu_", "Placa de vídeo"),
+    ("ram_", "Memória RAM"), ("ssd_", "SSD"), ("monitor_", "Monitor"), ("gabinete_", "Gabinete"),
+    ("fans_", "Ventoinhas"), ("teclado_", "Teclado"), ("mouse_", "Mouse"), ("mousepad_", "Mousepad"),
+    ("braco_", "Microfone e acessórios"), ("extra_", "Outros"),
+]
+
+
+def categoria(item: dict) -> str:
+    if item.get("categoria"):
+        return item["categoria"]
+    # "mousepad_" precisa ganhar de "mouse_": testa os prefixos mais longos primeiro
+    for prefixo, nome in sorted(CATEGORIAS, key=lambda c: -len(c[0])):
+        if item["id"].startswith(prefixo):
+            return nome
+    return "Outros"
 
 
 def _ofertas_atuais(hist: list[dict], item: dict, agora) -> list[dict]:
@@ -61,6 +79,7 @@ def montar(itens: list[dict], hist: list[dict], combos: list[dict], fotos: dict,
             "nome": item["nome"],
             "curto": item.get("curto") or item["nome"],
             "fase": item.get("fase"),
+            "categoria": categoria(item),
             "recomendado": item.get("recomendado", True),
             "alvo": item.get("alvo"),
             "imagem": fotos.get(item["id"]),
@@ -90,9 +109,10 @@ def montar(itens: list[dict], hist: list[dict], combos: list[dict], fotos: dict,
 
     return {
         "atualizado": agora.isoformat(timespec="minutes"),
-        "fases": {str(k): v for k, v in NOMES_FASE.items()},
+        "categorias": list(dict.fromkeys([n for _, n in CATEGORIAS] + [i["categoria"] for i in saida_itens])),
         "itens": saida_itens,
         "combos": saida_combos,
+        "monitoradas": sorted({u for i in itens for u in i["urls"]}),
     }
 
 

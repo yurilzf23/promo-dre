@@ -125,7 +125,7 @@ def dados_alerta(item: dict, leitura, motivos: list[str]) -> dict:
 # ---------------------------------------------------------------- resumo diário
 
 NOMES_FASE = {1: "plataforma", 2: "placa de vídeo", 3: "memória, SSD e monitor",
-              4: "gabinete e ventilação", 5: "periféricos"}
+              4: "gabinete e ventilação", 5: "periféricos", 6: "outros"}
 MIN_DIAS_MEDIANA = 5
 
 
