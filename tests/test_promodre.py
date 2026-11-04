@@ -117,7 +117,7 @@ def test_produtos_yaml_valido():
     ids = [i["id"] for i in itens]
     assert len(ids) == len(set(ids))
     for i in itens:
-        assert i["urls"] and i["alvo"] > 0 and i["fase"] in (1, 2, 3)
+        assert i["urls"] and i["alvo"] > 0 and i["fase"] in (1, 2, 3, 4, 5)
 
 
 def test_resumo_marca_item_no_alvo():

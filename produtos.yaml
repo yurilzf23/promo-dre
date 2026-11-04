@@ -252,3 +252,98 @@ itens:
       - https://www.kabum.com.br/produto/1063600
       - https://www.kabum.com.br/produto/695543
       - https://www.kabum.com.br/produto/943542
+
+  # =============== Fase 4: gabinete aquário e ventilação ===============
+  - id: gabinete_xr
+    nome: Gabinete aquário Montech XR (já vem com 3 fans ARGB PWM)
+    curto: Gabinete Montech XR
+    fase: 4
+    alvo: 400  # provisório
+    urls:
+      - https://www.terabyteshop.com.br/produto/29264/gabinete-gamer-montech-xr-mid-tower-black-atx-com-3-fans-vidro-temperado-xr-b
+      - https://www.terabyteshop.com.br/produto/29263/gabinete-gamer-montech-xr-mid-tower-white-atx-com-3-fans-vidro-temperado-xr-w
+      - https://www.kabum.com.br/produto/905390
+
+  - id: gabinete_wideload
+    nome: Gabinete aquário Redragon Wideload Pro (vem sem fans)
+    curto: Gabinete Wideload Pro
+    fase: 4
+    alvo: 320  # provisório
+    recomendado: false
+    urls:
+      - https://www.pichau.com.br/gabinete-redragon-wideload-pro-mid-tower-lateral-de-vidro-preto-ca-604b-pro
+      - https://www.terabyteshop.com.br/produto/27178/gabinete-gamer-redragon-wideload-pro-mid-tower-vidro-temperado-atx-black-sem-fonte-sem-fan-ca-604b-pro
+      - https://www.kabum.com.br/produto/518940
+
+  - id: fans_kit3
+    nome: Kit 3 fans 120 mm ARGB PWM (Thermalright TL-C12C-S / Rise Mode Magneto)
+    curto: Kit 3 fans ARGB
+    fase: 4
+    alvo: 95  # provisório
+    urls:
+      - https://www.pichau.com.br/kit-ventoinhas-thermalright-tl-c12c-s-x3-argb-3x120mm-preto-tl-c12c-s-x3
+      - https://www.pichau.com.br/kit-ventoinhas-thermalright-tl-c12cw-s-argb-3x120mm-branco-tl-c12cw-sx3
+      - https://www.terabyteshop.com.br/produto/31455/kit-fan-com-3-unidades-thermalright-tl-c12c-s3-argb-120mm-pwm-preto
+      - https://www.kabum.com.br/produto/457785
+      - https://www.kabum.com.br/produto/457786
+
+  # =============== Fase 5: periféricos ===============
+  - id: teclado_ucal
+    nome: Teclado magnético Redragon Ucal K673 (75%, ABNT2, Rapid Trigger)
+    curto: Teclado Redragon Ucal HE
+    fase: 5
+    alvo: 250  # provisório
+    urls:
+      - https://www.kabum.com.br/produto/985708
+
+  - id: teclado_r82he
+    nome: Teclado magnético Attack Shark R82 HE (75%, 8 kHz)
+    curto: Teclado Attack Shark R82 HE
+    fase: 5
+    alvo: 300  # provisório
+    recomendado: false
+    urls:
+      - https://www.pichau.com.br/teclado-mecanico-attack-shark-r82-he-rgb-switch-hall-effect-magnetico-preto-r82-he-bk
+      - https://www.pichau.com.br/teclado-mecanico-attack-shark-r82-he-rgb-switch-hall-effect-magnetico-branco-r82-he-wh
+      - https://www.pichau.com.br/teclado-mecanico-attack-shark-r82-he-rgb-switch-hall-effect-magnetico-rosa-r82-he-pk
+      - https://www.kabum.com.br/produto/1019494
+
+  - id: teclado_x68he
+    nome: Teclado magnético Attack Shark X68 HE (65%, 8 kHz)
+    curto: Teclado Attack Shark X68 HE
+    fase: 5
+    alvo: 250  # provisório
+    recomendado: false
+    urls:
+      - https://www.kabum.com.br/produto/904387
+      - https://www.kabum.com.br/produto/904388
+
+  - id: mouse_g703
+    nome: Mouse Logitech G703 Lightspeed HERO (o mesmo que você já usa)
+    curto: Mouse G703 Lightspeed
+    fase: 5
+    alvo: 380  # média dos últimos 40 dias no Buscapé
+    urls:
+      - https://www.kabum.com.br/produto/102651
+
+  - id: mousepad_90x40
+    nome: Mousepad speed 90x40 (Redragon Flick XL / Xeon / HyperX Fury S)
+    curto: Mousepad 90x40
+    fase: 5
+    alvo: 80  # provisório
+    urls:
+      - https://www.pichau.com.br/mousepad-gamer-redragon-flick-xl-900x400x4mm-p032
+      - https://www.kabum.com.br/produto/154123
+      - https://www.terabyteshop.com.br/produto/28265/mousepad-gamer-redragon-xeon-speed-extra-grande-900x400mm-black-p041
+      - https://www.terabyteshop.com.br/produto/16702/mousepad-gamer-hyperx-fury-s-speed-extra-grande-black-hx-mpfs-s-xl
+
+  - id: braco_mic
+    nome: Braço articulado de microfone (rosca 3/8 e 5/8, serve no HyperX SoloCast)
+    curto: Braço p/ SoloCast
+    fase: 5
+    alvo: 130  # provisório
+    urls:
+      - https://www.pichau.com.br/braco-articulado-para-microfone-fifine-bm63-preto-bm63-blk
+      - https://www.pichau.com.br/braco-articulado-para-microfone-fifine-bm63-branco-bm63-wht
+      - https://www.pichau.com.br/braco-articulado-para-microfone-fifine-bm88-preto-bm88-blk
+      - https://www.kabum.com.br/produto/1047769
