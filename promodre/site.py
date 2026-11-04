@@ -70,7 +70,7 @@ def montar(itens: list[dict], hist: list[dict], combos: list[dict], fotos: dict,
             "menor_30d": min(minimos) if minimos else None,
             "mediana_30d": h.mediana(minimos) if len(minimos) >= 5 else None,
             "serie": serie,
-            "ofertas": ofertas,
+            "ofertas": disponiveis,  # o site só mostra anúncio que dá para comprar agora
             "paginas": len(item["urls"]),
         })
 

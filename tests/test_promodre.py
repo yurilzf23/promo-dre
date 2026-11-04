@@ -272,6 +272,6 @@ def test_site_monta_melhor_oferta_e_combos():
     d = site.montar(itens, hist, [{"nome": "Combo", "itens": ["cpu", "mb"]}], {"cpu": "https://img/x.jpg"}, agora)
     cpu, mb = d["itens"]
     assert cpu["melhor"]["preco"] == 899.0 and cpu["melhor"]["loja"] == "Kabum"  # esgotada não vale
-    assert cpu["variacao"] == -51.0 and cpu["imagem"] == "https://img/x.jpg" and len(cpu["ofertas"]) == 2
+    assert cpu["variacao"] == -51.0 and cpu["imagem"] == "https://img/x.jpg" and len(cpu["ofertas"]) == 1
     assert mb["melhor"] is None and not mb["esgotado"]
     assert d["combos"][0]["total"] is None and d["combos"][0]["faltam"] == ["Placa Y"]
