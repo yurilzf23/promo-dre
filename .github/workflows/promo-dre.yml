@@ -45,18 +45,24 @@ jobs:
           fi
 
       - name: Executar
-        run: |
-          if [ "${{ steps.t.outputs.tarefa }}" = "coletar" ]; then
-            # a Pichau bloqueia os servidores do GitHub; ela é coletada pelo PC (coletar_pc.bat)
-            python -m promodre.main coletar --sem pichau
-          fi
-          python -m promodre.main site
+        if: steps.t.outputs.tarefa == 'coletar'
+        # a Pichau bloqueia os servidores do GitHub; ela é coletada pelo PC (coletar_pc.bat)
+        run: python -m promodre.main coletar --sem pichau
 
       - name: Salvar histórico e site
         run: |
           git config user.name "promo-dre-bot"
           git config user.email "promo-dre-bot@users.noreply.github.com"
-          git add data/ docs/
-          git diff --cached --quiet || git commit -m "${{ steps.t.outputs.tarefa }} $(date -u +%Y-%m-%dT%H:%MZ)"
-          git pull --rebase -q origin main
-          git push
+          git add data/
+          git diff --cached --quiet || git commit -q -m "${{ steps.t.outputs.tarefa }} $(date -u +%Y-%m-%dT%H:%MZ)"
+          # o site é sempre regenerado DEPOIS de puxar o que mudou no repositório,
+          # assim o docs/dados.json nunca entra em conflito (até 3 tentativas)
+          for tentativa in 1 2 3; do
+            git pull --rebase -q -X theirs origin main
+            python -m promodre.main site
+            git add docs/
+            git diff --cached --quiet || git commit -q -m "site $(date -u +%Y-%m-%dT%H:%MZ)"
+            if git push -q; then exit 0; fi
+            echo "push recusado, tentando de novo ($tentativa)"; sleep 5
+          done
+          exit 1
