@@ -58,6 +58,7 @@ def coletar(pausa: tuple[float, float] = (2.0, 5.0), so: set[str] | None = None,
     estado = h.carregar_estado()
     quando = h.agora()
     registros, avisos, falhas, esgotados = [], [], [], []
+    fotos: dict[str, str] = {}
     bloqueios: dict[str, int] = {}
     total = sum(len(filtrar_urls(i["urls"], so, sem)) for i in itens)
     n = 0
@@ -79,6 +80,8 @@ def coletar(pausa: tuple[float, float] = (2.0, 5.0), so: set[str] | None = None,
             print(f"{situacao} ({time.time() - inicio:.0f}s)", flush=True)
             time.sleep(random.uniform(*pausa))
             bloqueios[loja] = bloqueios.get(loja, 0) + 1 if leitura.erro == "HTTP 403" else 0
+            if leitura.imagem and item["id"] not in fotos:
+                fotos[item["id"]] = leitura.imagem
             if leitura.preco is None:
                 lista = esgotados if leitura.disponivel is False else falhas
                 lista.append((item["nome"], LOJAS.get(leitura.loja, leitura.loja), leitura.erro))
@@ -94,6 +97,7 @@ def coletar(pausa: tuple[float, float] = (2.0, 5.0), so: set[str] | None = None,
 
     h.registrar(registros)
     h.salvar_estado(estado)
+    h.salvar_imagens(fotos)
 
     for a in avisos:
         notificar.alerta(a)
@@ -215,7 +219,7 @@ URL_TESTE = "https://www.kabum.com.br/produto/459144"
 
 
 def testar_alerta(url: str | None = None) -> dict | None:
-    """Lê um anúncio de verdade e manda o card de alerta marcado como TESTE (não mexe no histórico)."""
+    """Lê um anúncio de verdade e mostra no log o alerta marcado como TESTE (não mexe no histórico)."""
     url = url or URL_TESTE
     item = next((i for i in carregar_itens() if url in i["urls"]),
                 {"nome": "Produto de teste", "fase": None, "alvo": None})
@@ -254,7 +258,7 @@ def main() -> None:
     col.add_argument("--so", help="só estas lojas, separadas por vírgula (ex.: pichau)")
     col.add_argument("--sem", help="pula estas lojas, separadas por vírgula (ex.: pichau)")
     sub.add_parser("resumo")
-    sub.add_parser("testar")
+    sub.add_parser("site")
     ta = sub.add_parser("testar-alerta")
     ta.add_argument("--url", help="anúncio a usar no teste (padrão: RX 7600 da Kabum)")
     imp = sub.add_parser("importar-varredura")
@@ -269,8 +273,9 @@ def main() -> None:
         importar_varredura(a.arquivo)
     elif a.cmd == "testar-alerta":
         testar_alerta(a.url)
-    elif a.cmd == "testar":
-        print("enviado" if notificar.teste() else "falhou")
+    elif a.cmd == "site":
+        from .site import gerar
+        gerar()
 
 
 if __name__ == "__main__":

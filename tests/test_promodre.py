@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from promodre import alertas, discord, historico as h, notificar
+from promodre import alertas, historico as h, notificar
 from promodre.main import brl, carregar_itens, montar_resumo
 from promodre.scraper import interpretar, loja_da_url, preco_br
 
@@ -143,39 +143,7 @@ class _Resp:
         return self._js
 
 
-def test_discord_alerta_monta_embed(monkeypatch):
-    enviados = []
-    monkeypatch.setenv("DISCORD_WEBHOOK_URL", "https://discord.com/api/webhooks/x/y")
-    monkeypatch.delenv("TELEGRAM_TOKEN", raising=False)
-    monkeypatch.setattr(discord.requests, "post", lambda url, json, timeout: enviados.append(json) or _Resp(204))
-    monkeypatch.setattr(discord.time, "sleep", lambda s: None)
-    notificar.alerta({"nome": "RTX 5060 8 GB", "preco_fmt": "R$ 2.299,99", "loja": "Kabum",
-                      "url": "https://www.kabum.com.br/p", "motivos": ["abaixo do alvo de R$ 2.350"],
-                      "titulo_pagina": "Placa X", "fase": 2, "imagem": "https://img.exemplo/gpu.jpg"})
-    e = enviados[0]["embeds"][0]
-    assert enviados[0]["username"] == "Promo Dre"
-    assert e["url"] == "https://www.kabum.com.br/p" and "RTX 5060" in e["title"]
-    assert any(f["value"] == "**R$ 2.299,99**" for f in e["fields"])
-    assert e["thumbnail"]["url"] == "https://img.exemplo/gpu.jpg"
 
-
-def test_discord_respeita_limite_429(monkeypatch):
-    respostas = [_Resp(429, {"retry_after": 0.1}), _Resp(204)]
-    monkeypatch.setattr(discord.requests, "post", lambda url, json, timeout: respostas.pop(0))
-    monkeypatch.setattr(discord.time, "sleep", lambda s: None)
-    assert discord.enviar({"content": "oi"}, webhook="https://x") is True
-
-
-def test_discord_resumo_um_embed_por_fase():
-    fases = [{"fase": 1, "titulo": "Fase 1 · plataforma", "total": "Hoje R$ 129,90 · alvo R$ 130,00",
-              "linhas": [{"nome": "Cooler", "preco_fmt": "R$ 129,90", "url": "u", "loja": "Pichau",
-                          "no_alvo": True, "variacao": "🔻 R$ 10,00", "detalhe": "R$ 0,10 abaixo do alvo"}]},
-             {"fase": 2, "titulo": "Fase 2", "total": "", "linhas": [{"nome": "GPU", "preco_fmt": None, "no_alvo": False}]}]
-    embeds = discord.embed_resumo("Resumo", fases, "leg")
-    assert len(embeds) == 2 and embeds[0]["color"] == discord.COR_OK and embeds[0]["title"] == "Fase 1 · plataforma"
-    d = embeds[0]["description"]
-    assert d.startswith("**Hoje R$ 129,90") and "[R$ 129,90](u) Pichau 🔻 R$ 10,00" in d
-    assert embeds[1]["footer"]["text"] == "leg"
 
 
 def test_brl():
@@ -220,7 +188,6 @@ def test_resumo_avisa_quando_tudo_esgotou():
     fases = montar_resumo(itens, hist, hoje)
     assert fases[0]["linhas"][0]["esgotado"] is True
     assert "esgotado em todas as lojas" in notificar.texto_resumo("R", fases, "l", html=False)
-    assert "esgotado em todas as lojas" in discord.embed_resumo("R", fases, "l")[0]["description"]
 
 
 def test_testar_alerta_marca_como_teste(monkeypatch):
@@ -289,4 +256,22 @@ def test_combos_comparam_plataformas():
                            "Intel: R$ 1.782,87 · alvo R$ 1.700,00",
                            "AMD X3D: sem preço hoje (X3D)"]
     assert f["total"] == ""  # com combos, o total genérico da fase sai
-    assert "**Combos hoje**" in discord.embed_resumo("R", [f], "l")[0]["description"]
+
+
+def test_site_monta_melhor_oferta_e_combos():
+    from datetime import timedelta
+    from promodre import site
+    agora = h.agora()
+    itens = [{"id": "cpu", "nome": "CPU X", "fase": 1, "alvo": 900, "urls": ["https://a/1", "https://b/1"]},
+             {"id": "mb", "nome": "Placa Y", "fase": 1, "alvo": 500, "urls": ["https://a/2"]}]
+    reg = lambda i, u, p, disp=True, dt=agora, loja="kabum": {"data_hora": dt, "item": i, "loja": loja, "url": u,
+                                                         "preco": p, "disponivel": str(disp), "origem": "coleta"}
+    hist = [reg("cpu", "https://a/1", 950.0, dt=agora - timedelta(days=1)),
+            reg("cpu", "https://a/1", 899.0), reg("cpu", "https://b/1", 850.0, disp=False, loja="pichau"),
+            reg("mb", "https://a/2", 520.0, dt=agora - timedelta(hours=60))]  # velha demais
+    d = site.montar(itens, hist, [{"nome": "Combo", "itens": ["cpu", "mb"]}], {"cpu": "https://img/x.jpg"}, agora)
+    cpu, mb = d["itens"]
+    assert cpu["melhor"]["preco"] == 899.0 and cpu["melhor"]["loja"] == "Kabum"  # esgotada não vale
+    assert cpu["variacao"] == -51.0 and cpu["imagem"] == "https://img/x.jpg" and len(cpu["ofertas"]) == 2
+    assert mb["melhor"] is None and not mb["esgotado"]
+    assert d["combos"][0]["total"] is None and d["combos"][0]["faltam"] == ["Placa Y"]

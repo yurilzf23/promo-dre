@@ -17,6 +17,7 @@ PERFIL = os.environ.get("PROMODRE_PERFIL", "").strip().lower()
 _SUFIXO = f"_{PERFIL}" if PERFIL else ""
 ARQ_HISTORICO = RAIZ / "data" / f"historico{_SUFIXO}.csv"
 ARQ_ESTADO = RAIZ / "data" / f"estado{_SUFIXO}.json"
+ARQ_IMAGENS = RAIZ / "data" / f"imagens{_SUFIXO}.json"
 CAMPOS = ["data_hora", "item", "loja", "url", "preco", "disponivel", "origem"]
 
 
@@ -90,3 +91,27 @@ def carregar_estado(caminho: Path = ARQ_ESTADO) -> dict:
 def salvar_estado(estado: dict, caminho: Path = ARQ_ESTADO) -> None:
     caminho.parent.mkdir(parents=True, exist_ok=True)
     caminho.write_text(json.dumps(estado, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def carregar_imagens() -> dict:
+    """Foto de cada item (junta imagens.json do GitHub e imagens_pc.json do PC)."""
+    fotos: dict = {}
+    for arq in sorted((RAIZ / "data").glob("imagens*.json")):
+        try:
+            fotos.update(json.loads(arq.read_text(encoding="utf-8")))
+        except (OSError, ValueError):
+            pass
+    return fotos
+
+
+def salvar_imagens(novas: dict, caminho: Path = ARQ_IMAGENS) -> None:
+    if not novas:
+        return
+    atuais = {}
+    if caminho.exists():
+        try:
+            atuais = json.loads(caminho.read_text(encoding="utf-8"))
+        except ValueError:
+            atuais = {}
+    atuais.update(novas)
+    caminho.write_text(json.dumps(atuais, ensure_ascii=False, indent=1, sort_keys=True), encoding="utf-8")

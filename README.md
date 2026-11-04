@@ -1,79 +1,66 @@
 # Promo Dre
 
-Monitor de preços dos upgrades do PC com alertas no Discord. Ele consulta direto as páginas da Pichau, Kabum e Terabyte (e qualquer loja com JSON-LD), guarda o histórico e só avisa quando o preço cai de verdade.
+Monitor de preços dos upgrades do PC, com um site para consultar tudo. O bot lê direto as páginas da Pichau, Kabum e Terabyte (e qualquer loja com JSON-LD), guarda o histórico e publica um painel no GitHub Pages.
+
+**Site:** https://yurilzf23.github.io/promo-dre/
 
 ## Como funciona
 
-- **Coleta a cada 2 horas** (GitHub Actions): lê o preço à vista (PIX) de cada URL do `produtos.yaml` e grava em `data/historico.csv`.
-- **Alerta na hora** quando o preço:
-  - fica igual ou abaixo do **alvo** do item
-  - cai **8% abaixo do melhor preço típico dos últimos 30 dias** (mediana do menor preço de cada dia, a partir de 5 dias de histórico)
-  - bate o **menor preço já registrado** (também a partir de 5 dias)
-- **Não repete** o mesmo alerta (item + loja + preço) por 7 dias. Se o preço cair mais, avisa de novo na hora.
-- **Foto do produto** no card do alerta, puxada da página da loja.
-- Produto esgotado não conta como falha: aparece separado no log.
-- **Resumo diário às 08:41**: menor preço de cada item no dia, alvo e mediana de 30 dias, um card por fase (fica verde quando algum item da fase está no alvo).
-- **Telegram opcional**: se você cadastrar também os secrets do Telegram, os avisos saem nos dois.
+- **Coleta a cada 2 horas** (GitHub Actions): lê o preço à vista (PIX) e a foto de cada URL do `produtos.yaml` e grava em `data/historico.csv` e `data/imagens.json`.
+- **Site atualizado na mesma hora**: depois de cada coleta, `python -m promodre.main site` gera `docs/dados.json`, que é lido pelo `docs/index.html`.
+- **Sem notificações por enquanto**: as regras de alerta (alvo, queda de 8% sobre a mediana de 30 dias, menor preço já visto) continuam calculadas e aparecem no log da coleta.
 
-## Configuração (uns 10 minutos)
+### O que o site mostra
 
-1. **Crie um servidor só seu no Discord**: botão **+** na barra da esquerda → *Criar o meu* → *Para mim e meus amigos*. Dê o nome que quiser (ex.: Promo Dre).
-2. **Crie o canal dos alertas**, por exemplo `#promocoes`.
-3. **Gere o webhook**: engrenagem do canal (*Editar canal*) → *Integrações* → *Webhooks* → *Novo webhook* → *Copiar URL do webhook*.
-   - Trate essa URL como senha: quem tiver ela consegue postar no canal.
-4. **Crie o repositório** `promo-dre` no GitHub (privado) e suba estes arquivos.
-5. **Cadastre o secret** em *Settings → Secrets and variables → Actions → New repository secret*:
-   - nome `DISCORD_WEBHOOK_URL`, valor a URL copiada
-6. **Teste**: em *Actions → Promo Dre → Run workflow*, rode com `testar`. Deve chegar um card verde no canal. Depois rode com `coletar`.
-7. **No celular**: instale o app do Discord e deixe as notificações do canal em *Todas as mensagens* pra receber o alerta na hora.
+- Cada peça com foto, menor preço atual, loja e botão para comprar.
+- Quanto falta para o alvo (ou quanto está abaixo), variação desde ontem e mini gráfico dos últimos 30 dias.
+- Todas as ofertas lidas de cada peça, com as esgotadas riscadas.
+- Combos de plataforma (AMD x Intel) com o total do dia.
+- Resumo no topo: total do upgrade recomendado, itens no alvo, quedas e esgotados.
+- Filtros por fase, busca, "só recomendados", "só no alvo", ordenação e **modo claro/escuro** (segue o sistema e lembra sua escolha).
+- Preço com mais de 48 h sem leitura não aparece como atual.
+
+## Ativar o site (uma vez)
+
+*Settings → Pages → Build and deployment → Source: Deploy from a branch → Branch: `main`, pasta `/docs` → Save.*
+Em 1 ou 2 minutos o site fica no ar no endereço acima.
 
 ## Comandos locais
 
 ```bash
 pip install -r requirements.txt
 python -m promodre.main coletar
-python -m promodre.main resumo
-python -m promodre.main testar
+python -m promodre.main site
+python -m promodre.main resumo        # resumo em texto no terminal
 python -m pytest -q
 ```
 
-No Windows, defina a variável antes: `set DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...`
+Para ver o site no PC: `cd docs` e `python -m http.server`, depois abra http://localhost:8000.
 
 ## Editando a lista
 
-Tudo fica no `produtos.yaml`. Para cada item: `id`, `nome`, `fase`, `alvo` e as `urls` das páginas de produto.
+Tudo fica no `produtos.yaml`. Para cada item: `id`, `nome`, `curto`, `fase`, `alvo`, `recomendado` (false = alternativa) e as `urls` das páginas de produto. Os `combos` no topo do arquivo definem as comparações de plataforma.
 
-**Regra usada nos alvos iniciais:** o menor valor entre o mais barato encontrado na varredura e 92% da mediana, arredondado para baixo em R$ 10. Depois de umas semanas de histórico, vale ajustar com base na mediana real.
-
-## Histórico inicial
-
-O arquivo `data/varredura_2026-11-03.json` tem a varredura manual que originou os alvos (60 preços, 9 itens). Ele já está importado no `historico.csv`. Para reimportar:
-
-```bash
-python -m promodre.main importar-varredura data/varredura_2026-11-03.json
-```
+**Regra usada nos alvos iniciais:** o menor valor entre o mais barato encontrado e 92% da mediana, arredondado para baixo em R$ 10. Depois de umas semanas de histórico, vale ajustar com base na mediana real.
 
 ## Pichau pelo seu PC
 
-A Pichau bloqueia os servidores do GitHub (HTTP 403). O GitHub coleta só Kabum e Terabyte (`coletar --sem pichau`) e a Pichau é coletada pelo seu computador.
+A Pichau bloqueia os servidores do GitHub (HTTP 403). O GitHub coleta só Kabum e Terabyte (`coletar --sem pichau`) e a Pichau é coletada pelo seu computador com `coletar_pc.bat` no Agendador de Tarefas, a cada 3 horas.
 
-- A coleta do PC grava em `data/historico_pc.csv` e `data/estado_pc.json`, sem conflito com a do GitHub.
-- O resumo diário lê os dois históricos juntos.
-- Os alertas da Pichau saem direto do PC para o mesmo canal do Discord.
-
-Passo a passo de instalação e agendamento: veja as instruções enviadas no chat (Python 3.12, Git for Windows, `instalar_pc.bat`, `webhook.txt`, `coletar_pc.bat` no Agendador de Tarefas a cada 3 horas).
+- A coleta do PC grava em `data/historico_pc.csv`, `data/estado_pc.json` e `data/imagens_pc.json`, sem conflito com a do GitHub.
+- Quando o PC sobe a coleta, o GitHub regenera o site sozinho.
 
 ## Estrutura
 
 ```
-produtos.yaml            lista de itens, alvos e URLs
-promodre/scraper.py      leitura de preço por loja (Pichau, Kabum, Terabyte, genérico)
+produtos.yaml            lista de itens, alvos, URLs e combos
+promodre/scraper.py      leitura de preço e foto por loja (Pichau, Kabum, Terabyte, genérico)
 promodre/alertas.py      regras de alerta e anti-repetição
-promodre/historico.py    histórico CSV e estado dos alertas
-promodre/discord.py      cards de alerta e resumo no Discord
-promodre/notificar.py    escolhe o canal (Discord, Telegram ou só log)
-promodre/telegram.py     envio opcional pelo Telegram
-promodre/main.py         comandos coletar / resumo / importar-varredura
-data/                    histórico, estado e varredura inicial
+promodre/historico.py    histórico CSV, estado dos alertas e fotos
+promodre/site.py         gera docs/dados.json para o site
+promodre/notificar.py    saída dos avisos (hoje só o log)
+promodre/main.py         comandos coletar / site / resumo / importar-varredura
+docs/                    site (index.html + dados.json)
+data/                    histórico, estado, fotos e varredura inicial
 .github/workflows/       agendamento
 ```

@@ -2,12 +2,14 @@ name: Promo Dre
 
 on:
   schedule:
-    - cron: "17 */2 * * *"   # coleta a cada 2 horas
-    - cron: "41 11 * * *"    # resumo diário às 08:41 (horário de Brasília)
+    - cron: "17 */2 * * *"   # coleta a cada 2 horas e atualiza o site
+  push:                      # quando o PC sobe a coleta da Pichau, só regenera o site
+    branches: [main]
+    paths: ["data/historico_pc.csv", "data/imagens_pc.json"]
   workflow_dispatch:
     inputs:
       tarefa:
-        description: "coletar, resumo, testar ou testar-alerta"
+        description: "coletar ou site"
         default: coletar
 
 permissions:
@@ -36,31 +38,25 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "tarefa=${{ github.event.inputs.tarefa }}" >> "$GITHUB_OUTPUT"
-          elif [ "${{ github.event.schedule }}" = "41 11 * * *" ]; then
-            echo "tarefa=resumo" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event_name }}" = "push" ]; then
+            echo "tarefa=site" >> "$GITHUB_OUTPUT"
           else
             echo "tarefa=coletar" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Executar
-        env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           if [ "${{ steps.t.outputs.tarefa }}" = "coletar" ]; then
             # a Pichau bloqueia os servidores do GitHub; ela é coletada pelo PC (coletar_pc.bat)
             python -m promodre.main coletar --sem pichau
-          else
-            python -m promodre.main ${{ steps.t.outputs.tarefa }}
           fi
+          python -m promodre.main site
 
-      - name: Salvar histórico
-        if: steps.t.outputs.tarefa == 'coletar'
+      - name: Salvar histórico e site
         run: |
           git config user.name "promo-dre-bot"
           git config user.email "promo-dre-bot@users.noreply.github.com"
-          git add data/
-          git diff --cached --quiet || git commit -m "coleta $(date -u +%Y-%m-%dT%H:%MZ)"
+          git add data/ docs/
+          git diff --cached --quiet || git commit -m "${{ steps.t.outputs.tarefa }} $(date -u +%Y-%m-%dT%H:%MZ)"
           git pull --rebase -q origin main
           git push
