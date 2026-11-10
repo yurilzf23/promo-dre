@@ -5,8 +5,8 @@
       "quando": "2026-11-03T02:16-03:00"
     },
     "monitor_180hz|https://www.terabyteshop.com.br/produto/38152/monitor-gamer-duex-24-pol-full-hd-1ms-180hz-ips-freesync-hdmidp-dxmo24f180": {
-      "preco": 569.99,
-      "quando": "2026-11-03T02:16-03:00"
+      "preco": 499.99,
+      "quando": "2026-11-10T17:55-03:00"
     },
     "monitor_180hz|https://www.kabum.com.br/produto/752839/monitor-gamer-duex-24-full-hd-180hz-1ms-ips-adaptative-sync-hdr-10-hdmi-e-displayport-som-integrado-preto-dxmo24f180s": {
       "preco": 589.99,
@@ -31,6 +31,10 @@
     "gpu_rx7600|https://www.kabum.com.br/produto/459144": {
       "preco": 1849.99,
       "quando": "2026-11-06T11:57-03:00"
+    },
+    "cpu_5700x|https://www.kabum.com.br/produto/320797": {
+      "preco": 929.99,
+      "quando": "2026-11-10T17:55-03:00"
     }
   }
 }
